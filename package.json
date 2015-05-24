@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "description": "Create, edit, transform GeoJSON map data in British National Grid reference system.",
   "main": "index.html",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/rob-murray/gb-geojson.git"
@@ -28,5 +25,25 @@
   "bugs": {
     "url": "https://github.com/rob-murray/gb-geojson/issues"
   },
-  "homepage": "https://github.com/rob-murray/gb-geojson"
+  "homepage": "https://github.com/rob-murray/gb-geojson",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch-js": "watchify -e src/main.js -o dist/bundle.js",
+    "build-dev": "browserify -e src/main.js -o dist/bundle.js",
+    "build": "NODE_ENV='production' browserify -e src/main.js | uglifyjs -cm > dist/bundle.js"
+  },
+  "devDependencies": {
+    "browserify": "^10.2.1",
+    "envify": "^3.4.0",
+    "express": "^4.12.4",
+    "flux": "^2.0.3",
+    "jsxhint": "^0.15.0",
+    "keymirror": "^0.1.1",
+    "object-assign": "^2.0.0",
+    "react": "^0.13.3",
+    "reactify": "^1.1.1",
+    "uglify-js": "^2.4.23",
+    "underscore": "^1.8.3",
+    "watchify": "^3.2.1"
+  }
 }
