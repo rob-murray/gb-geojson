@@ -1,0 +1,32 @@
+{
+  "name": "gb-geojson",
+  "version": "0.0.1",
+  "description": "Create, edit, transform GeoJSON map data in British National Grid reference system.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rob-murray/gb-geojson.git"
+  },
+  "keywords": [
+    "os",
+    "ordnance",
+    "survey",
+    "ordnance",
+    "survey",
+    "osgb",
+    "osgb36",
+    "openspace",
+    "geojson",
+    "transform",
+    "projection"
+  ],
+  "author": "Rob Murray <robmurray17@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rob-murray/gb-geojson/issues"
+  },
+  "homepage": "https://github.com/rob-murray/gb-geojson"
+}
