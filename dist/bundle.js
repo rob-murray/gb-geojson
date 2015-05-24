@@ -15931,13 +15931,13 @@ var AppActions = {
    * Create new GeoJSON object.
    *
    * @param  {object} data The GeoJSON data object
-   * @param  {const} inputCrs The reference system used
+   * @param  {const} inputReferenceSystem The reference system used
    */
-  create: function(data, inputCrs) {
+  create: function(data, inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_CREATE,
       data: data,
-      inputCrs: inputCrs
+      inputReferenceSystem: inputReferenceSystem
     });
   },
 
@@ -15945,11 +15945,11 @@ var AppActions = {
    * NOT USED :\
    * @param  {object} data
    */
-  update: function(data, inputCrs) {
+  update: function(data, inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_UPDATE,
       data: data,
-      inputCrs: inputCrs
+      inputReferenceSystem: inputReferenceSystem
     });
   },
 
@@ -15966,17 +15966,17 @@ var AppActions = {
    * Coordinate reference sytem of data has changed
    * @param {const} The CRS changed to
    */
-  referenceSystemChanged: function(inputCrs) {
+  referenceSystemChanged: function(inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.CRS_CHANGE,
-      inputCrs: inputCrs
+      inputReferenceSystem: inputReferenceSystem
     });
   }
 };
 
 module.exports = AppActions;
 
-},{"../constants/AppConstants":82,"../dispatcher/AppDispatcher":83}],77:[function(require,module,exports){
+},{"../constants/AppConstants":85,"../dispatcher/AppDispatcher":86}],77:[function(require,module,exports){
 var OSMap = require('./OSMap.jsx'),
   MenuPanel = require('./MenuPanel.jsx'),
   ManualEditPanel = require('./ManualEditPanel.jsx'),
@@ -16004,22 +16004,22 @@ var App = React.createClass({displayName: "App",
 
   render: function(){
     var geoJson = this.state.item.geoJson,
-      inputFormat = this.state.item.inputFormat,
+      inputReferenceSystem = this.state.item.inputReferenceSystem,
       geoJsonForMapView = this._geoJsonForMapView();
       // TODO we need the wgs84 version for the map. design this better
 
     return (
       React.createElement("div", null, 
-        React.createElement(OSMap, {geoJson: geoJsonForMapView, inputFormat: inputFormat}), 
+        React.createElement(OSMap, {geoJson: geoJsonForMapView, inputReferenceSystem: inputReferenceSystem}), 
         React.createElement(MenuPanel, null, 
-          React.createElement(ManualEditPanel, {geoJson: geoJson, inputFormat: inputFormat})
+          React.createElement(ManualEditPanel, {geoJson: geoJson, inputReferenceSystem: inputReferenceSystem})
         )
       )
     );
   },
 
   _geoJsonForMapView: function() {
-    return GeoStore.getItem(AppConstants.INPUT_FORMAT_LONLAT).geoJson
+    return GeoStore.getItem(AppConstants.CRS_LONLAT).geoJson
   },
 
   /**
@@ -16034,9 +16034,144 @@ var App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"../constants/AppConstants":82,"../stores/GeoStore":86,"./ManualEditPanel.jsx":78,"./MenuPanel.jsx":79,"./OSMap.jsx":80}],78:[function(require,module,exports){
-var //JsonInput = require('./JsonInput.jsx'),
-  //FeatureList = require('./FeatureList.jsx'),
+},{"../constants/AppConstants":85,"../stores/GeoStore":90,"./ManualEditPanel.jsx":81,"./MenuPanel.jsx":82,"./OSMap.jsx":83}],78:[function(require,module,exports){
+var FeatureRow = require('./FeatureRow.jsx'),
+  FeatureParser = require('../geo/FeatureParser');
+
+var FeatureList = React.createClass({displayName: "FeatureList",
+  propTypes: {
+    geoJson: React.PropTypes.object.isRequired
+  },
+
+  getDefaultProps: function() {
+    return {
+      geoJson: {}
+    };
+  },
+
+  render: function() {
+    var features = FeatureParser.features(this.props.geoJson);
+
+    return (
+      React.createElement("ul", {className: "collection"}, 
+        features.map(function(f, i) {
+          return React.createElement(FeatureRow, {key: i, feature: f});
+        })
+      )
+    );
+  }
+});
+
+module.exports = FeatureList;
+
+},{"../geo/FeatureParser":87,"./FeatureRow.jsx":79}],79:[function(require,module,exports){
+
+// todo improve presentation
+function presentFeature(data) {
+  return JSON.stringify(data.properties);
+}
+
+var FeatureRow = React.createClass({displayName: "FeatureRow",
+  propTypes: {
+    feature: React.PropTypes.object
+  },
+
+  getDefaultProps: function() {
+    return {
+      feature: {}
+    };
+  },
+
+  render: function() {
+    var feature = this.props.feature,
+      featureType = feature.type
+
+    return (
+      React.createElement("li", {className: "collection-item"}, 
+        React.createElement("span", {className: "title"}, featureType), 
+        React.createElement("p", null, presentFeature(feature)
+        )
+      )
+    );
+  }
+});
+
+module.exports = FeatureRow
+
+},{}],80:[function(require,module,exports){
+var AppActions = require('../actions/AppActions'),
+  AppConstants = require('../constants/AppConstants');
+
+function presentGeoJson(data) {
+  return JSON.stringify(data);
+}
+
+var JsonEditInput = React.createClass({displayName: "JsonEditInput",
+  propTypes: {
+    geoJson: React.PropTypes.object.isRequired
+  },
+
+  getDefaultProps: function() {
+    return {
+      isEditing: false
+    };
+  },
+
+  getInitialState: function() {
+    return {
+      focus: false
+    };
+  },
+
+  onInputFocus: function(e) {
+    this.setState({focus: true});
+  },
+
+  onInputBlur: function(e) {
+    this.setState({focus: false});
+  },
+
+  onInputChange: function(e) {
+    if (e.currentTarget.value.trim()) {
+      var data = JSON.parse(e.currentTarget.value);
+
+      AppActions.create(
+        data
+      );
+    }
+  },
+
+  render: function() {
+    var classes = 'materialize-textarea',
+      editableGeoJson = presentGeoJson(this.props.geoJson);
+
+    if(this.state.focus) {
+      classes = classes + ' selected-input';
+    }
+
+    return (
+      React.createElement("div", {id: "jsonContainer", className: "input-field"}, 
+        React.createElement("textarea", {
+          rows: "20", 
+          cols: "10", 
+          className: classes, 
+          placeholder: "{}", 
+          onFocus: this.onInputFocus, 
+          onBlur: this.onInputBlur, 
+          onChange: this.onInputChange, 
+          value: editableGeoJson}
+        )
+      )
+    );
+  }
+
+});
+
+module.exports = JsonEditInput;
+
+},{"../actions/AppActions":76,"../constants/AppConstants":85}],81:[function(require,module,exports){
+var JsonEditInput = require('./JsonEditInput.jsx'),
+  FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants');
 
@@ -16044,34 +16179,34 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
   getDefaultProps: function() {
     return {
       isEditing: false,
-      inputCrs: AppConstants.CRS_LONLAT
+      inputReferenceSystem: AppConstants.CRS_LONLAT
     };
   },
 
   onFormatChange: function(e) {
     var checked = e.currentTarget.checked;
-    var inputCrs = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
-    AppActions.formatChange(
-      inputCrs
+    var inputReferenceSystem = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
+    AppActions.referenceSystemChanged(
+      inputReferenceSystem
     );
   },
 
   render: function(){
-    var checkbox_value = this._inputCrsMapping();
+    var checkbox_value = this._inputReferenceSystemMapping();
 
     return (
       React.createElement("div", null, 
-        React.createElement("div", {id: "edit", className: "col s12 active"}
-
+        React.createElement("div", {id: "edit", className: "col s12 active"}, 
+          React.createElement(JsonEditInput, {geoJson: this.props.geoJson})
         ), 
-        React.createElement("div", {id: "list", className: "col s12"}
-
+        React.createElement("div", {id: "list", className: "col s12"}, 
+          React.createElement(FeatureList, {geoJson: this.props.geoJson})
         ), 
         React.createElement("div", {className: "switch"}, 
           React.createElement("label", null, 
             "Lon/Lat", 
             React.createElement("input", {
-              ref: "inputCrs", 
+              ref: "inputReferenceSystem", 
               type: "checkbox", 
               value: checkbox_value, 
               onChange: this.onFormatChange}
@@ -16084,14 +16219,14 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
     );
   },
 
-  _inputCrsMapping: function() {
-    this.props.inputCrs == AppConstants.CRS_BNG;
+  _inputReferenceSystemMapping: function() {
+    this.props.inputReferenceSystem == AppConstants.CRS_BNG;
   }
 });
 
 module.exports = ManualEditPanel;
 
-},{"../actions/AppActions":76,"../constants/AppConstants":82}],79:[function(require,module,exports){
+},{"../actions/AppActions":76,"../constants/AppConstants":85,"./FeatureList.jsx":78,"./JsonEditInput.jsx":80}],82:[function(require,module,exports){
 var TabSwitcher = require("./TabSwitcher.jsx"),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants');
@@ -16143,7 +16278,7 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
 
 module.exports = MenuPanel;
 
-},{"../actions/AppActions":76,"../constants/AppConstants":82,"./TabSwitcher.jsx":81}],80:[function(require,module,exports){
+},{"../actions/AppActions":76,"../constants/AppConstants":85,"./TabSwitcher.jsx":84}],83:[function(require,module,exports){
 var OSOpenSpace = require('os-leaflet'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),
@@ -16286,7 +16421,7 @@ var OSMap = React.createClass({displayName: "OSMap",
 
 module.exports = OSMap;
 
-},{"../actions/AppActions":76,"../constants/AppConstants":82,"../geo/Utils":85,"leaflet-draw":6,"os-leaflet":8}],81:[function(require,module,exports){
+},{"../actions/AppActions":76,"../constants/AppConstants":85,"../geo/Utils":89,"leaflet-draw":6,"os-leaflet":8}],84:[function(require,module,exports){
 var EDIT_TAB = 0,
   FEATURE_LIST_TAB = 1;
 
@@ -16315,7 +16450,7 @@ var TabSwitcher = React.createClass({displayName: "TabSwitcher",
 
 module.exports = TabSwitcher;
 
-},{}],82:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 var keyMirror = require('keymirror');
 
 module.exports = keyMirror({
@@ -16327,12 +16462,45 @@ module.exports = keyMirror({
   CRS_BNG: null
 });
 
-},{"keymirror":5}],83:[function(require,module,exports){
+},{"keymirror":5}],86:[function(require,module,exports){
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
 
-},{"flux":2}],84:[function(require,module,exports){
+},{"flux":2}],87:[function(require,module,exports){
+
+function parseFeature(feature) {
+  return {
+    properties: feature.properties,
+    type: feature.geometry.type
+  };
+}
+
+function anyFeatures(geoJson) {
+  return (geoJson.features && geoJson.features.length);
+}
+
+function validGeoJson(geoJson) {
+  return (geoJson && geoJson.geometry);
+}
+
+function parseGeoJson(geoJson) {
+  if (!validGeoJson(geoJson) && !anyFeatures(geoJson)) {
+    return [];
+  } else {
+    if (geoJson.type === 'Feature') {
+      return [parseFeature(geoJson)];
+    }else{
+      return geoJson.features.map(parseFeature);
+    }
+  }
+}
+
+module.exports = {
+  features: parseGeoJson
+}
+
+},{}],88:[function(require,module,exports){
 var gbifygeoson = require("../../../gbgeojsonify");
 
 module.exports = {
@@ -16345,7 +16513,7 @@ module.exports = {
   }
 }
 
-},{"../../../gbgeojsonify":87}],85:[function(require,module,exports){
+},{"../../../gbgeojsonify":91}],89:[function(require,module,exports){
 module.exports = {
   featureCollection: function (features) {
     return {
@@ -16355,7 +16523,7 @@ module.exports = {
   }
 }
 
-},{}],86:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var AppDispatcher = require('../dispatcher/AppDispatcher'),
   EventEmitter = require('events').EventEmitter,
   AppConstants = require('../constants/AppConstants'),
@@ -16381,8 +16549,8 @@ var initialCrs = AppConstants.CRS_LONLAT;
 // todo
 function reproject(geoJson, requestedCrs) {
   if(requestedCrs === AppConstants.CRS_LONLAT) {
-    return ReprojectGeoJson.toWgs84(geoJson);
-  }else{
+    return ReprojectGeoJson.toWGS84(geoJson);
+  } else {
     return ReprojectGeoJson.toOSGB36(geoJson);
   }
 }
@@ -16528,7 +16696,7 @@ setInputCrs(initialCrs);
 
 module.exports = AppStore;
 
-},{"../constants/AppConstants":82,"../dispatcher/AppDispatcher":83,"../geo/ReprojectGeoJson":84,"../geo/Utils":85,"events":1,"object-assign":7}],87:[function(require,module,exports){
+},{"../constants/AppConstants":85,"../dispatcher/AppDispatcher":86,"../geo/ReprojectGeoJson":88,"../geo/Utils":89,"events":1,"object-assign":7}],91:[function(require,module,exports){
 (function (root, factory) {
   // UMD for Node, AMD or browser globals.
   if (typeof define === 'function' && define.amd) {
@@ -16618,7 +16786,7 @@ module.exports = AppStore;
   };
 }));
 
-},{"proj4":124}],88:[function(require,module,exports){
+},{"proj4":128}],92:[function(require,module,exports){
 var mgrs = require('mgrs');
 
 function Point(x, y, z) {
@@ -16654,7 +16822,7 @@ Point.prototype.toMGRS = function(accuracy) {
   return mgrs.forward([this.x, this.y], accuracy);
 };
 module.exports = Point;
-},{"mgrs":155}],89:[function(require,module,exports){
+},{"mgrs":159}],93:[function(require,module,exports){
 var parseCode = require("./parseCode");
 var extend = require('./extend');
 var projections = require('./projections');
@@ -16689,11 +16857,11 @@ Projection.projections = projections;
 Projection.projections.start();
 module.exports = Projection;
 
-},{"./deriveConstants":120,"./extend":121,"./parseCode":125,"./projections":127}],90:[function(require,module,exports){
+},{"./deriveConstants":124,"./extend":125,"./parseCode":129,"./projections":131}],94:[function(require,module,exports){
 arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],91:[function(require,module,exports){
+},{"dup":12}],95:[function(require,module,exports){
 arguments[4][13][0].apply(exports,arguments)
-},{"./sign":108,"dup":13}],92:[function(require,module,exports){
+},{"./sign":112,"dup":13}],96:[function(require,module,exports){
 var TWO_PI = Math.PI * 2;
 // SPI is slightly greater than Math.PI, so values that exceed the -180..180
 // degree range by a tiny amount don't get wrapped. This prevents points that
@@ -16705,41 +16873,41 @@ var sign = require('./sign');
 module.exports = function(x) {
   return (Math.abs(x) <= SPI) ? x : (x - (sign(x) * TWO_PI));
 };
-},{"./sign":108}],93:[function(require,module,exports){
+},{"./sign":112}],97:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],94:[function(require,module,exports){
+},{"dup":15}],98:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16}],95:[function(require,module,exports){
+},{"dup":16}],99:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],96:[function(require,module,exports){
+},{"dup":17}],100:[function(require,module,exports){
 arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],97:[function(require,module,exports){
+},{"dup":18}],101:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],98:[function(require,module,exports){
+},{"dup":19}],102:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],99:[function(require,module,exports){
+},{"dup":20}],103:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],100:[function(require,module,exports){
+},{"dup":21}],104:[function(require,module,exports){
 arguments[4][22][0].apply(exports,arguments)
-},{"dup":22}],101:[function(require,module,exports){
+},{"dup":22}],105:[function(require,module,exports){
 arguments[4][23][0].apply(exports,arguments)
-},{"dup":23}],102:[function(require,module,exports){
+},{"dup":23}],106:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],103:[function(require,module,exports){
+},{"dup":24}],107:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],104:[function(require,module,exports){
+},{"dup":25}],108:[function(require,module,exports){
 arguments[4][26][0].apply(exports,arguments)
-},{"dup":26}],105:[function(require,module,exports){
+},{"dup":26}],109:[function(require,module,exports){
 arguments[4][27][0].apply(exports,arguments)
-},{"./pj_mlfn":106,"dup":27}],106:[function(require,module,exports){
+},{"./pj_mlfn":110,"dup":27}],110:[function(require,module,exports){
 arguments[4][28][0].apply(exports,arguments)
-},{"dup":28}],107:[function(require,module,exports){
+},{"dup":28}],111:[function(require,module,exports){
 arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],108:[function(require,module,exports){
+},{"dup":29}],112:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30}],109:[function(require,module,exports){
+},{"dup":30}],113:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],110:[function(require,module,exports){
+},{"dup":31}],114:[function(require,module,exports){
 module.exports = function (array){
   var out = {
     x: array[0],
@@ -16753,9 +16921,9 @@ module.exports = function (array){
   }
   return out;
 };
-},{}],111:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
-},{"dup":32}],112:[function(require,module,exports){
+},{"dup":32}],116:[function(require,module,exports){
 exports.wgs84 = {
   towgs84: "0,0,0",
   ellipse: "WGS84",
@@ -16836,15 +17004,15 @@ exports.rnb72 = {
   ellipse: "intl",
   datumName: "Reseau National Belge 1972"
 };
-},{}],113:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 arguments[4][34][0].apply(exports,arguments)
-},{"dup":34}],114:[function(require,module,exports){
+},{"dup":34}],118:[function(require,module,exports){
 arguments[4][35][0].apply(exports,arguments)
-},{"dup":35}],115:[function(require,module,exports){
+},{"dup":35}],119:[function(require,module,exports){
 exports.ft = {to_meter: 0.3048};
 exports['us-ft'] = {to_meter: 1200 / 3937};
 
-},{}],116:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 var proj = require('./Proj');
 var transform = require('./transform');
 var wgs84 = proj('WGS84');
@@ -16909,11 +17077,11 @@ function proj4(fromProj, toProj, coord) {
   }
 }
 module.exports = proj4;
-},{"./Proj":89,"./transform":153}],117:[function(require,module,exports){
+},{"./Proj":93,"./transform":157}],121:[function(require,module,exports){
 arguments[4][38][0].apply(exports,arguments)
-},{"dup":38}],118:[function(require,module,exports){
+},{"dup":38}],122:[function(require,module,exports){
 arguments[4][39][0].apply(exports,arguments)
-},{"dup":39}],119:[function(require,module,exports){
+},{"dup":39}],123:[function(require,module,exports){
 var globals = require('./global');
 var parseProj = require('./projString');
 var wkt = require('./wkt');
@@ -16970,7 +17138,7 @@ function defs(name) {
 globals(defs);
 module.exports = defs;
 
-},{"./global":122,"./projString":126,"./wkt":154}],120:[function(require,module,exports){
+},{"./global":126,"./projString":130,"./wkt":158}],124:[function(require,module,exports){
 var Datum = require('./constants/Datum');
 var Ellipsoid = require('./constants/Ellipsoid');
 var extend = require('./extend');
@@ -17028,9 +17196,9 @@ module.exports = function(json) {
   return json;
 };
 
-},{"./constants/Datum":112,"./constants/Ellipsoid":113,"./datum":117,"./extend":121}],121:[function(require,module,exports){
+},{"./constants/Datum":116,"./constants/Ellipsoid":117,"./datum":121,"./extend":125}],125:[function(require,module,exports){
 arguments[4][41][0].apply(exports,arguments)
-},{"dup":41}],122:[function(require,module,exports){
+},{"dup":41}],126:[function(require,module,exports){
 module.exports = function(defs) {
   defs('EPSG:4326', "+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees");
   defs('EPSG:4269', "+title=NAD83 (long/lat) +proj=longlat +a=6378137.0 +b=6356752.31414036 +ellps=GRS80 +datum=NAD83 +units=degrees");
@@ -17043,7 +17211,7 @@ module.exports = function(defs) {
   defs['EPSG:102113'] = defs['EPSG:3857'];
 };
 
-},{}],123:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 var projs = [
   require('./projections/tmerc'),
   require('./projections/utm'),
@@ -17073,7 +17241,7 @@ module.exports = function(proj4){
     proj4.Proj.projections.add(proj);
   });
 };
-},{"./projections/aea":128,"./projections/aeqd":129,"./projections/cass":130,"./projections/cea":131,"./projections/eqc":132,"./projections/eqdc":133,"./projections/gnom":135,"./projections/krovak":136,"./projections/laea":137,"./projections/lcc":138,"./projections/mill":141,"./projections/moll":142,"./projections/nzmg":143,"./projections/omerc":144,"./projections/poly":145,"./projections/sinu":146,"./projections/somerc":147,"./projections/stere":148,"./projections/sterea":149,"./projections/tmerc":150,"./projections/utm":151,"./projections/vandg":152}],124:[function(require,module,exports){
+},{"./projections/aea":132,"./projections/aeqd":133,"./projections/cass":134,"./projections/cea":135,"./projections/eqc":136,"./projections/eqdc":137,"./projections/gnom":139,"./projections/krovak":140,"./projections/laea":141,"./projections/lcc":142,"./projections/mill":145,"./projections/moll":146,"./projections/nzmg":147,"./projections/omerc":148,"./projections/poly":149,"./projections/sinu":150,"./projections/somerc":151,"./projections/stere":152,"./projections/sterea":153,"./projections/tmerc":154,"./projections/utm":155,"./projections/vandg":156}],128:[function(require,module,exports){
 var proj4 = require('./core');
 proj4.defaultDatum = 'WGS84'; //default datum
 proj4.Proj = require('./Proj');
@@ -17086,7 +17254,7 @@ proj4.mgrs = require('mgrs');
 proj4.version = require('../package.json').version;
 require('./includedProjections')(proj4);
 module.exports = proj4;
-},{"../package.json":156,"./Point":88,"./Proj":89,"./common/toPoint":110,"./core":116,"./defs":119,"./includedProjections":123,"./transform":153,"mgrs":155}],125:[function(require,module,exports){
+},{"../package.json":160,"./Point":92,"./Proj":93,"./common/toPoint":114,"./core":120,"./defs":123,"./includedProjections":127,"./transform":157,"mgrs":159}],129:[function(require,module,exports){
 var defs = require('./defs');
 var wkt = require('./wkt');
 var projStr = require('./projString');
@@ -17123,7 +17291,7 @@ function parse(code){
 }
 
 module.exports = parse;
-},{"./defs":119,"./projString":126,"./wkt":154}],126:[function(require,module,exports){
+},{"./defs":123,"./projString":130,"./wkt":158}],130:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var PrimeMeridian = require('./constants/PrimeMeridian');
 var units = require('./constants/units');
@@ -17257,7 +17425,7 @@ module.exports = function(defData) {
   return self;
 };
 
-},{"./constants/PrimeMeridian":114,"./constants/units":115}],127:[function(require,module,exports){
+},{"./constants/PrimeMeridian":118,"./constants/units":119}],131:[function(require,module,exports){
 var projs = [
   require('./projections/merc'),
   require('./projections/longlat')
@@ -17293,27 +17461,27 @@ exports.start = function() {
   projs.forEach(add);
 };
 
-},{"./projections/longlat":139,"./projections/merc":140}],128:[function(require,module,exports){
+},{"./projections/longlat":143,"./projections/merc":144}],132:[function(require,module,exports){
 arguments[4][45][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/asinz":93,"../common/msfnz":102,"../common/qsfnz":107,"dup":45}],129:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/asinz":97,"../common/msfnz":106,"../common/qsfnz":111,"dup":45}],133:[function(require,module,exports){
 arguments[4][46][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/asinz":93,"../common/e0fn":94,"../common/e1fn":95,"../common/e2fn":96,"../common/e3fn":97,"../common/gN":98,"../common/imlfn":99,"../common/mlfn":101,"dup":46}],130:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/asinz":97,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/gN":102,"../common/imlfn":103,"../common/mlfn":105,"dup":46}],134:[function(require,module,exports){
 arguments[4][47][0].apply(exports,arguments)
-},{"../common/adjust_lat":91,"../common/adjust_lon":92,"../common/e0fn":94,"../common/e1fn":95,"../common/e2fn":96,"../common/e3fn":97,"../common/gN":98,"../common/imlfn":99,"../common/mlfn":101,"dup":47}],131:[function(require,module,exports){
+},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/gN":102,"../common/imlfn":103,"../common/mlfn":105,"dup":47}],135:[function(require,module,exports){
 arguments[4][48][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/iqsfnz":100,"../common/msfnz":102,"../common/qsfnz":107,"dup":48}],132:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/iqsfnz":104,"../common/msfnz":106,"../common/qsfnz":111,"dup":48}],136:[function(require,module,exports){
 arguments[4][49][0].apply(exports,arguments)
-},{"../common/adjust_lat":91,"../common/adjust_lon":92,"dup":49}],133:[function(require,module,exports){
+},{"../common/adjust_lat":95,"../common/adjust_lon":96,"dup":49}],137:[function(require,module,exports){
 arguments[4][50][0].apply(exports,arguments)
-},{"../common/adjust_lat":91,"../common/adjust_lon":92,"../common/e0fn":94,"../common/e1fn":95,"../common/e2fn":96,"../common/e3fn":97,"../common/imlfn":99,"../common/mlfn":101,"../common/msfnz":102,"dup":50}],134:[function(require,module,exports){
+},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/imlfn":103,"../common/mlfn":105,"../common/msfnz":106,"dup":50}],138:[function(require,module,exports){
 arguments[4][51][0].apply(exports,arguments)
-},{"../common/srat":109,"dup":51}],135:[function(require,module,exports){
+},{"../common/srat":113,"dup":51}],139:[function(require,module,exports){
 arguments[4][52][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/asinz":93,"dup":52}],136:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/asinz":97,"dup":52}],140:[function(require,module,exports){
 arguments[4][54][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"dup":54}],137:[function(require,module,exports){
+},{"../common/adjust_lon":96,"dup":54}],141:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/qsfnz":107,"dup":55}],138:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/qsfnz":111,"dup":55}],142:[function(require,module,exports){
 var EPSLN = 1.0e-10;
 var msfnz = require('../common/msfnz');
 var tsfnz = require('../common/tsfnz');
@@ -17450,9 +17618,9 @@ exports.inverse = function(p) {
 
 exports.names = ["Lambert Tangential Conformal Conic Projection", "Lambert_Conformal_Conic", "Lambert_Conformal_Conic_2SP", "lcc"];
 
-},{"../common/adjust_lon":92,"../common/msfnz":102,"../common/phi2z":103,"../common/sign":108,"../common/tsfnz":111}],139:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/msfnz":106,"../common/phi2z":107,"../common/sign":112,"../common/tsfnz":115}],143:[function(require,module,exports){
 arguments[4][57][0].apply(exports,arguments)
-},{"dup":57}],140:[function(require,module,exports){
+},{"dup":57}],144:[function(require,module,exports){
 var msfnz = require('../common/msfnz');
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
@@ -17551,21 +17719,21 @@ exports.inverse = function(p) {
 
 exports.names = ["Mercator", "Popular Visualisation Pseudo Mercator", "Mercator_1SP", "Mercator_Auxiliary_Sphere", "merc"];
 
-},{"../common/adjust_lon":92,"../common/msfnz":102,"../common/phi2z":103,"../common/tsfnz":111}],141:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/msfnz":106,"../common/phi2z":107,"../common/tsfnz":115}],145:[function(require,module,exports){
 arguments[4][59][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"dup":59}],142:[function(require,module,exports){
+},{"../common/adjust_lon":96,"dup":59}],146:[function(require,module,exports){
 arguments[4][60][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"dup":60}],143:[function(require,module,exports){
+},{"../common/adjust_lon":96,"dup":60}],147:[function(require,module,exports){
 arguments[4][61][0].apply(exports,arguments)
-},{"dup":61}],144:[function(require,module,exports){
+},{"dup":61}],148:[function(require,module,exports){
 arguments[4][62][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/phi2z":103,"../common/tsfnz":111,"dup":62}],145:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/phi2z":107,"../common/tsfnz":115,"dup":62}],149:[function(require,module,exports){
 arguments[4][63][0].apply(exports,arguments)
-},{"../common/adjust_lat":91,"../common/adjust_lon":92,"../common/e0fn":94,"../common/e1fn":95,"../common/e2fn":96,"../common/e3fn":97,"../common/gN":98,"../common/mlfn":101,"dup":63}],146:[function(require,module,exports){
+},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/gN":102,"../common/mlfn":105,"dup":63}],150:[function(require,module,exports){
 arguments[4][64][0].apply(exports,arguments)
-},{"../common/adjust_lat":91,"../common/adjust_lon":92,"../common/asinz":93,"../common/pj_enfn":104,"../common/pj_inv_mlfn":105,"../common/pj_mlfn":106,"dup":64}],147:[function(require,module,exports){
+},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/asinz":97,"../common/pj_enfn":108,"../common/pj_inv_mlfn":109,"../common/pj_mlfn":110,"dup":64}],151:[function(require,module,exports){
 arguments[4][65][0].apply(exports,arguments)
-},{"dup":65}],148:[function(require,module,exports){
+},{"dup":65}],152:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
 var sign = require('../common/sign');
@@ -17733,15 +17901,15 @@ exports.inverse = function(p) {
 };
 exports.names = ["stere", "Stereographic_South_Pole", "Polar Stereographic (variant B)"];
 
-},{"../common/adjust_lon":92,"../common/msfnz":102,"../common/phi2z":103,"../common/sign":108,"../common/tsfnz":111}],149:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/msfnz":106,"../common/phi2z":107,"../common/sign":112,"../common/tsfnz":115}],153:[function(require,module,exports){
 arguments[4][67][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"./gauss":134,"dup":67}],150:[function(require,module,exports){
+},{"../common/adjust_lon":96,"./gauss":138,"dup":67}],154:[function(require,module,exports){
 arguments[4][68][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/asinz":93,"../common/e0fn":94,"../common/e1fn":95,"../common/e2fn":96,"../common/e3fn":97,"../common/mlfn":101,"../common/sign":108,"dup":68}],151:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/asinz":97,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/mlfn":105,"../common/sign":112,"dup":68}],155:[function(require,module,exports){
 arguments[4][69][0].apply(exports,arguments)
-},{"./tmerc":150,"dup":69}],152:[function(require,module,exports){
+},{"./tmerc":154,"dup":69}],156:[function(require,module,exports){
 arguments[4][70][0].apply(exports,arguments)
-},{"../common/adjust_lon":92,"../common/asinz":93,"dup":70}],153:[function(require,module,exports){
+},{"../common/adjust_lon":96,"../common/asinz":97,"dup":70}],157:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var R2D = 57.29577951308232088;
 var PJD_3PARAM = 1;
@@ -17814,7 +17982,7 @@ module.exports = function transform(source, dest, point) {
 
   return point;
 };
-},{"./Proj":89,"./adjust_axis":90,"./common/toPoint":110,"./datum_transform":118}],154:[function(require,module,exports){
+},{"./Proj":93,"./adjust_axis":94,"./common/toPoint":114,"./datum_transform":122}],158:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var extend = require('./extend');
 
@@ -18033,9 +18201,9 @@ module.exports = function(wkt, self) {
   return extend(self, obj.output);
 };
 
-},{"./extend":121}],155:[function(require,module,exports){
+},{"./extend":125}],159:[function(require,module,exports){
 arguments[4][74][0].apply(exports,arguments)
-},{"dup":74}],156:[function(require,module,exports){
+},{"dup":74}],160:[function(require,module,exports){
 module.exports={
   "name": "proj4",
   "version": "2.3.6",
@@ -18139,7 +18307,7 @@ module.exports={
   "readme": "ERROR: No README data found!"
 }
 
-},{}],157:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 var App = require('./components/App.jsx');
 
 React.render(
@@ -18147,4 +18315,4 @@ React.render(
   document.getElementById('app')
 );
 
-},{"./components/App.jsx":77}]},{},[157]);
+},{"./components/App.jsx":77}]},{},[161]);

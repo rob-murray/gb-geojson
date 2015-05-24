@@ -1,5 +1,5 @@
-var //JsonInput = require('./JsonInput.jsx'),
-  //FeatureList = require('./FeatureList.jsx'),
+var JsonEditInput = require('./JsonEditInput.jsx'),
+  FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants');
 
@@ -7,34 +7,34 @@ var ManualEditPanel = React.createClass({
   getDefaultProps: function() {
     return {
       isEditing: false,
-      inputCrs: AppConstants.CRS_LONLAT
+      inputReferenceSystem: AppConstants.CRS_LONLAT
     };
   },
 
   onFormatChange: function(e) {
     var checked = e.currentTarget.checked;
-    var inputCrs = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
-    AppActions.formatChange(
-      inputCrs
+    var inputReferenceSystem = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
+    AppActions.referenceSystemChanged(
+      inputReferenceSystem
     );
   },
 
   render: function(){
-    var checkbox_value = this._inputCrsMapping();
+    var checkbox_value = this._inputReferenceSystemMapping();
 
     return (
       <div>
         <div id="edit" className="col s12 active">
-
+          <JsonEditInput geoJson={this.props.geoJson} />
         </div>
         <div id="list" className="col s12">
-
+          <FeatureList geoJson={this.props.geoJson} />
         </div>
         <div className="switch">
           <label>
             Lon/Lat
             <input
-              ref="inputCrs"
+              ref="inputReferenceSystem"
               type="checkbox"
               value={checkbox_value}
               onChange={this.onFormatChange}
@@ -47,8 +47,8 @@ var ManualEditPanel = React.createClass({
     );
   },
 
-  _inputCrsMapping: function() {
-    this.props.inputCrs == AppConstants.CRS_BNG;
+  _inputReferenceSystemMapping: function() {
+    this.props.inputReferenceSystem == AppConstants.CRS_BNG;
   }
 });
 

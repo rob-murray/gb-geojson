@@ -23,8 +23,8 @@ var initialCrs = AppConstants.CRS_LONLAT;
 // todo
 function reproject(geoJson, requestedCrs) {
   if(requestedCrs === AppConstants.CRS_LONLAT) {
-    return ReprojectGeoJson.toWgs84(geoJson);
-  }else{
+    return ReprojectGeoJson.toWGS84(geoJson);
+  } else {
     return ReprojectGeoJson.toOSGB36(geoJson);
   }
 }

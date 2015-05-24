@@ -6,13 +6,13 @@ var AppActions = {
    * Create new GeoJSON object.
    *
    * @param  {object} data The GeoJSON data object
-   * @param  {const} inputCrs The reference system used
+   * @param  {const} inputReferenceSystem The reference system used
    */
-  create: function(data, inputCrs) {
+  create: function(data, inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_CREATE,
       data: data,
-      inputCrs: inputCrs
+      inputReferenceSystem: inputReferenceSystem
     });
   },
 
@@ -20,11 +20,11 @@ var AppActions = {
    * NOT USED :\
    * @param  {object} data
    */
-  update: function(data, inputCrs) {
+  update: function(data, inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_UPDATE,
       data: data,
-      inputCrs: inputCrs
+      inputReferenceSystem: inputReferenceSystem
     });
   },
 
@@ -41,10 +41,10 @@ var AppActions = {
    * Coordinate reference sytem of data has changed
    * @param {const} The CRS changed to
    */
-  referenceSystemChanged: function(inputCrs) {
+  referenceSystemChanged: function(inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.CRS_CHANGE,
-      inputCrs: inputCrs
+      inputReferenceSystem: inputReferenceSystem
     });
   }
 };

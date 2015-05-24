@@ -25,22 +25,22 @@ var App = React.createClass({
 
   render: function(){
     var geoJson = this.state.item.geoJson,
-      inputFormat = this.state.item.inputFormat,
+      inputReferenceSystem = this.state.item.inputReferenceSystem,
       geoJsonForMapView = this._geoJsonForMapView();
       // TODO we need the wgs84 version for the map. design this better
 
     return (
       <div>
-        <OSMap geoJson={geoJsonForMapView} inputFormat={inputFormat} />
+        <OSMap geoJson={geoJsonForMapView} inputReferenceSystem={inputReferenceSystem} />
         <MenuPanel>
-          <ManualEditPanel geoJson={geoJson} inputFormat={inputFormat} />
+          <ManualEditPanel geoJson={geoJson} inputReferenceSystem={inputReferenceSystem} />
         </MenuPanel>
       </div>
     );
   },
 
   _geoJsonForMapView: function() {
-    return GeoStore.getItem(AppConstants.INPUT_FORMAT_LONLAT).geoJson
+    return GeoStore.getItem(AppConstants.CRS_LONLAT).geoJson
   },
 
   /**
