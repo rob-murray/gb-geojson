@@ -32,6 +32,12 @@
     "build-dev": "browserify -e src/main.js -o dist/bundle.js",
     "build": "NODE_ENV='production' browserify -e src/main.js | uglifyjs -cm > dist/bundle.js"
   },
+  "browserify": {
+    "transform": [
+      "reactify",
+      "envify"
+    ]
+  },
   "devDependencies": {
     "browserify": "^10.2.1",
     "envify": "^3.4.0",
