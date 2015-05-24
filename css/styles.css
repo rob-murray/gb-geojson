@@ -9,3 +9,31 @@ html, body {
   bottom:0;
   width:100%;
 }
+
+#app, .map {
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:100%;
+}
+
+.map-panel {
+  width: 300px;
+  z-index: 1005;
+}
+
+#menu-panel {
+  width: 500px;
+  max-width: 500px;
+  top: 15px;
+  left: 15px;
+  position: fixed;
+}
+
+#menu-panel .brand-logo {
+  margin-left: 10px;
+}
+
+#menu-panel textarea {
+  resize: none;
+}
