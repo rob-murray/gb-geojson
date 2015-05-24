@@ -1,0 +1,1 @@
+{"type":"Feature","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:EPSG:27700"}},"properties":{"popupContent":"I am SU43."},"geometry":{"type":"Polygon","coordinates":[[[440000,130000],[450000,130000],[450000,140000],[440000,140000],[440000,130000]]]}}
