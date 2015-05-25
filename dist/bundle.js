@@ -16258,11 +16258,11 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
                   onClick: this._clearMap, 
                   href: "#clearMap", 
                   title: "Clear map"}, 
-                  React.createElement("i", {className: "mdi-content-clear"})
+                  React.createElement("i", {className: "mdi-maps-layers-clear"})
                 )
               ), 
               React.createElement("li", null, 
-                React.createElement("a", {href: "#!", className: "dropdown-button", "data-activates": "dropdown-menu"}, 
+                React.createElement("a", {href: "#!", title: "More options", className: "dropdown-button", "data-activates": "dropdown-menu"}, 
                   React.createElement("i", {className: "mdi-navigation-more-vert right"})
                 )
               )
@@ -16447,7 +16447,7 @@ var TabSwitcher = React.createClass({displayName: "TabSwitcher",
         ), 
         React.createElement("li", {className: "tab col s3"}, 
           React.createElement("a", {href: "#list", onClick: this.onClick.bind(this, FEATURE_LIST_TAB)}, 
-            React.createElement("i", {className: "small mdi-editor-format-list-bulleted"})
+            React.createElement("i", {className: "small mdi-action-view-list"})
           )
         )
       )

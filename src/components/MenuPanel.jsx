@@ -29,11 +29,11 @@ var MenuPanel = React.createClass({
                   onClick={this._clearMap}
                   href="#clearMap"
                   title="Clear map" >
-                  <i className="mdi-content-clear"></i>
+                  <i className="mdi-maps-layers-clear"></i>
                 </a>
               </li>
               <li>
-                <a href="#!" className="dropdown-button" data-activates="dropdown-menu">
+                <a href="#!" title="More options" className="dropdown-button" data-activates="dropdown-menu">
                   <i className="mdi-navigation-more-vert right"></i>
                 </a>
               </li>

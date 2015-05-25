@@ -16,7 +16,7 @@ var TabSwitcher = React.createClass({
         </li>
         <li className="tab col s3">
           <a href="#list" onClick={this.onClick.bind(this, FEATURE_LIST_TAB)}>
-            <i className="small mdi-editor-format-list-bulleted"></i>
+            <i className="small mdi-action-view-list"></i>
           </a>
         </li>
       </ul>
