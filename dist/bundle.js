@@ -16246,6 +16246,9 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
   render: function(){
     return (
       React.createElement("div", {id: "menu-panel", className: "map-panel card grey lighten-4 z-depth-2"}, 
+        React.createElement("ul", {id: "dropdown-menu", className: "dropdown-content"}, 
+          React.createElement("li", null, React.createElement("a", {href: "https://github.com/rob-murray/gb-geojson", title: "What is this all about?"}, "About"))
+        ), 
         React.createElement("nav", null, 
           React.createElement("div", {className: "nav-wrapper green lighten-1"}, 
             React.createElement("a", {href: "#", className: "brand-logo"}, "GB-GeoJson"), 
@@ -16258,7 +16261,11 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
                   React.createElement("i", {className: "mdi-content-clear"})
                 )
               ), 
-              React.createElement("li", null, React.createElement("a", {href: "#"}, React.createElement("i", {className: "mdi-navigation-more-vert"})))
+              React.createElement("li", null, 
+                React.createElement("a", {href: "#!", className: "dropdown-button", "data-activates": "dropdown-menu"}, 
+                  React.createElement("i", {className: "mdi-navigation-more-vert right"})
+                )
+              )
             )
           )
         ), 

@@ -17,6 +17,9 @@ var MenuPanel = React.createClass({
   render: function(){
     return (
       <div id="menu-panel" className="map-panel card grey lighten-4 z-depth-2">
+        <ul id="dropdown-menu" className="dropdown-content">
+          <li><a href="https://github.com/rob-murray/gb-geojson" title="What is this all about?">About</a></li>
+        </ul>
         <nav>
           <div className="nav-wrapper green lighten-1">
             <a href="#" className="brand-logo">GB-GeoJson</a>
@@ -29,7 +32,11 @@ var MenuPanel = React.createClass({
                   <i className="mdi-content-clear"></i>
                 </a>
               </li>
-              <li><a href="#"><i className="mdi-navigation-more-vert"></i></a></li>
+              <li>
+                <a href="#!" className="dropdown-button" data-activates="dropdown-menu">
+                  <i className="mdi-navigation-more-vert right"></i>
+                </a>
+              </li>
             </ul>
           </div>
         </nav>
