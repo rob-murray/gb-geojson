@@ -28,6 +28,7 @@ html, body {
   top: 15px;
   left: 15px;
   position: fixed;
+  margin: 0;
 }
 
 #menu-panel .brand-logo {
