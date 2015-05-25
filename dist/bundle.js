@@ -16204,16 +16204,18 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
         ), 
         React.createElement("div", {className: "switch"}, 
           React.createElement("label", null, 
-            "Lon/Lat", 
+            "Lon, Lat", 
             React.createElement("input", {
               ref: "inputReferenceSystem", 
               type: "checkbox", 
               value: checkbox_value, 
-              onChange: this.onFormatChange}
+              onChange: this.onFormatChange, 
+              className: "z-depth-1"}
             ), 
             React.createElement("span", {className: "lever"}), 
-            "BNG"
-          )
+            "OS National Grid"
+          ), 
+          React.createElement("a", {href: "TODO", title: "Explain the difference between coordinate reference systems", className: "right"}, "What is this?")
         )
       )
     );

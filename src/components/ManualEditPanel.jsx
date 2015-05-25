@@ -32,16 +32,18 @@ var ManualEditPanel = React.createClass({
         </div>
         <div className="switch">
           <label>
-            Lon/Lat
+            Lon, Lat
             <input
               ref="inputReferenceSystem"
               type="checkbox"
               value={checkbox_value}
               onChange={this.onFormatChange}
+              className="z-depth-1"
             />
             <span className="lever"></span>
-            BNG
+            OS National Grid
           </label>
+          <a href="TODO" title="Explain the difference between coordinate reference systems" className="right">What is this?</a>
         </div>
       </div>
     );
