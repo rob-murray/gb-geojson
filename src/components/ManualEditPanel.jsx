@@ -6,7 +6,6 @@ var JsonEditInput = require('./JsonEditInput.jsx'),
 var ManualEditPanel = React.createClass({
   getDefaultProps: function() {
     return {
-      isEditing: false,
       inputReferenceSystem: AppConstants.CRS_LONLAT
     };
   },

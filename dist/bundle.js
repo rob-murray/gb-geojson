@@ -1,4 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+},{}],2:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -301,7 +303,327 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require('_process'))
+},{"_process":4}],4:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = setTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            currentQueue[queueIndex].run();
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    clearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],5:[function(require,module,exports){
 /**
  * Copyright (c) 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -313,7 +635,7 @@ function isUndefined(arg) {
 
 module.exports.Dispatcher = require('./lib/Dispatcher')
 
-},{"./lib/Dispatcher":3}],3:[function(require,module,exports){
+},{"./lib/Dispatcher":6}],6:[function(require,module,exports){
 /*
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -565,7 +887,7 @@ var _prefix = 'ID_';
 
 module.exports = Dispatcher;
 
-},{"./invariant":4}],4:[function(require,module,exports){
+},{"./invariant":7}],7:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -620,7 +942,996 @@ var invariant = function(condition, format, a, b, c, d, e, f) {
 
 module.exports = invariant;
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+var jsonlint = require('jsonlint-lines');
+
+/**
+ * @alias geojsonhint
+ * @param {(string|object)} GeoJSON given as a string or as an object
+ * @returns {Array<Object>} an array of errors
+ */
+function hint(str) {
+
+    var errors = [], gj;
+
+    function root(_) {
+        if (!_.type) {
+            errors.push({
+                message: 'The type property is required and was not found',
+                line: _.__line__
+            });
+        } else if (!types[_.type]) {
+            errors.push({
+                message: 'The type ' + _.type + ' is unknown',
+                line: _.__line__
+            });
+        } else if (_) {
+            types[_.type](_);
+        }
+    }
+
+    function everyIs(_, type) {
+        // make a single exception because typeof null === 'object'
+        return _.every(function(x) { return (x !== null) && (typeof x === type); });
+    }
+
+    function requiredProperty(_, name, type) {
+        if (typeof _[name] == 'undefined') {
+            return errors.push({
+                message: '"' + name + '" property required',
+                line: _.__line__
+            });
+        } else if (type === 'array') {
+            if (!Array.isArray(_[name])) {
+                return errors.push({
+                    message: '"' + name +
+                        '" property should be an array, but is an ' +
+                        (typeof _[name]) + ' instead',
+                    line: _.__line__
+                });
+            }
+        } else if (type && typeof _[name] !== type) {
+            return errors.push({
+                message: '"' + name +
+                    '" property should be ' + (type) +
+                    ', but is an ' + (typeof _[name]) + ' instead',
+                line: _.__line__
+            });
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#feature-collection-objects
+    function FeatureCollection(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'features', 'array')) {
+            if (!everyIs(_.features, 'object')) {
+                return errors.push({
+                    message: 'Every feature must be an object',
+                    line: _.__line__
+                });
+            }
+            _.features.forEach(Feature);
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#positions
+    function position(_, line) {
+        if (!Array.isArray(_)) {
+            return errors.push({
+                message: 'position should be an array, is a ' + (typeof _) +
+                    ' instead',
+                line: _.__line__ || line
+            });
+        } else {
+            if (_.length < 2) {
+                return errors.push({
+                    message: 'position must have 2 or more elements',
+                    line: _.__line__ || line
+                });
+            }
+            if (!everyIs(_, 'number')) {
+                return errors.push({
+                    message: 'each element in a position must be a number',
+                    line: _.__line__ || line
+                });
+            }
+        }
+    }
+
+    function positionArray(coords, type, depth, line) {
+        if (line === undefined && coords.__line__ !== undefined) {
+            line = coords.__line__;
+        }
+        if (depth === 0) {
+            return position(coords, line);
+        } else {
+            if (depth === 1 && type) {
+                if (type === 'LinearRing') {
+                    if (!Array.isArray(coords[coords.length - 1])) {
+                        return errors.push({
+                            message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
+                            line: line
+                        });
+                    }
+                    if (coords.length < 4) {
+                        errors.push({
+                            message: 'a LinearRing of coordinates needs to have four or more positions',
+                            line: line
+                        });
+                    }
+                    if (coords.length &&
+                        (coords[coords.length - 1].length !== coords[0].length ||
+                        !coords[coords.length - 1].every(function(position, index) {
+                        return coords[0][index] === position;
+                    }))) {
+                        errors.push({
+                            message: 'the first and last positions in a LinearRing of coordinates must be the same',
+                            line: line
+                        });
+                    }
+                } else if (type === 'Line' && coords.length < 2) {
+                    errors.push({
+                        message: 'a line needs to have two or more coordinates to be valid',
+                        line: line
+                    });
+                }
+            }
+            if (!Array.isArray(coords)) {
+                return errors.push({
+                    message: 'coordinates must be list of positions',
+                    line: line
+                });
+            }
+            coords.forEach(function(c) {
+                positionArray(c, type, depth - 1, c.__line__ || line);
+            });
+        }
+    }
+
+    function crs(_) {
+        if (!_.crs) return;
+        if (typeof _.crs === 'object') {
+            var strErr = requiredProperty(_.crs, 'type', 'string'),
+                propErr = requiredProperty(_.crs, 'properties', 'object');
+            if (!strErr && !propErr) {
+                // http://geojson.org/geojson-spec.html#named-crs
+                if (_.crs.type == 'name') {
+                    requiredProperty(_.crs.properties, 'name', 'string');
+                } else if (_.crs.type == 'link') {
+                    requiredProperty(_.crs.properties, 'href', 'string');
+                }
+            }
+        } else {
+            errors.push({
+                message: 'the value of the crs property must be an object, not a ' + (typeof _.crs),
+                line: _.__line__
+            });
+        }
+    }
+
+    function bbox(_) {
+        if (!_.bbox) return;
+        if (Array.isArray(_.bbox)) {
+            if (!everyIs(_.bbox, 'number')) {
+                return errors.push({
+                    message: 'each element in a bbox property must be a number',
+                    line: _.bbox.__line__
+                });
+            }
+        } else {
+            errors.push({
+                message: 'bbox property must be an array of numbers, but is a ' + (typeof _.bbox),
+                line: _.__line__
+            });
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#point
+    function Point(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'coordinates', 'array')) {
+            position(_.coordinates);
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#polygon
+    function Polygon(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'coordinates', 'array')) {
+            positionArray(_.coordinates, 'LinearRing', 2);
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#multipolygon
+    function MultiPolygon(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'coordinates', 'array')) {
+            positionArray(_.coordinates, 'LinearRing', 3);
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#linestring
+    function LineString(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'coordinates', 'array')) {
+            positionArray(_.coordinates, 'Line', 1);
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#multilinestring
+    function MultiLineString(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'coordinates', 'array')) {
+            positionArray(_.coordinates, 'Line', 2);
+        }
+    }
+
+    // http://geojson.org/geojson-spec.html#multipoint
+    function MultiPoint(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'coordinates', 'array')) {
+            positionArray(_.coordinates, '', 1);
+        }
+    }
+
+    function GeometryCollection(_) {
+        crs(_);
+        bbox(_);
+        if (!requiredProperty(_, 'geometries', 'array')) {
+            _.geometries.forEach(function(geometry) {
+                if (geometry) root(geometry);
+            });
+        }
+    }
+
+    function Feature(_) {
+        crs(_);
+        bbox(_);
+        // https://github.com/geojson/draft-geojson/blob/master/middle.mkd#feature-object
+        if (_.id !== undefined &&
+            typeof _.id !== 'string' &&
+            typeof _.id !== 'number') {
+            errors.push({
+                message: 'Feature "id" property must have a string or number value',
+                line: _.__line__
+            });
+        }
+        if (_.type !== 'Feature') {
+            errors.push({
+                message: 'GeoJSON features must have a type=feature property',
+                line: _.__line__
+            });
+        }
+        requiredProperty(_, 'properties', 'object');
+        if (!requiredProperty(_, 'geometry', 'object')) {
+            // http://geojson.org/geojson-spec.html#feature-objects
+            // tolerate null geometry
+            if (_.geometry) root(_.geometry);
+        }
+    }
+
+    var types = {
+        Point: Point,
+        Feature: Feature,
+        MultiPoint: MultiPoint,
+        LineString: LineString,
+        MultiLineString: MultiLineString,
+        FeatureCollection: FeatureCollection,
+        GeometryCollection: GeometryCollection,
+        Polygon: Polygon,
+        MultiPolygon: MultiPolygon
+    };
+
+    if (typeof str === 'object') {
+        gj = str;
+    } else if (typeof str === 'string') {
+        try {
+            gj = jsonlint.parse(str);
+        } catch(e) {
+            var match = e.message.match(/line (\d+)/),
+                lineNumber = 0;
+            if (match) lineNumber = parseInt(match[1], 10);
+            return [{
+                line: lineNumber - 1,
+                message: e.message,
+                error: e
+            }];
+        }
+    } else {
+        return [{
+            message: 'Expected string or object as input',
+            line: 0
+        }];
+    }
+
+    if (typeof gj !== 'object' ||
+        gj === null ||
+        gj === undefined) {
+        errors.push({
+            message: 'The root of a GeoJSON object must be an object.',
+            line: 0
+        });
+        return errors;
+    }
+
+    root(gj);
+
+    errors.forEach(function(err) {
+        if (err.hasOwnProperty('line') && err.line === undefined) {
+            delete err.line;
+        }
+    });
+
+    return errors;
+}
+
+module.exports.hint = hint;
+
+},{"jsonlint-lines":9}],9:[function(require,module,exports){
+(function (process){
+/* parser generated by jison 0.4.6 */
+/*
+  Returns a Parser object of the following structure:
+
+  Parser: {
+    yy: {}
+  }
+
+  Parser.prototype: {
+    yy: {},
+    trace: function(),
+    symbols_: {associative list: name ==> number},
+    terminals_: {associative list: number ==> name},
+    productions_: [...],
+    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
+    table: [...],
+    defaultActions: {...},
+    parseError: function(str, hash),
+    parse: function(input),
+
+    lexer: {
+        EOF: 1,
+        parseError: function(str, hash),
+        setInput: function(input),
+        input: function(),
+        unput: function(str),
+        more: function(),
+        less: function(n),
+        pastInput: function(),
+        upcomingInput: function(),
+        showPosition: function(),
+        test_match: function(regex_match_array, rule_index),
+        next: function(),
+        lex: function(),
+        begin: function(condition),
+        popState: function(),
+        _currentRules: function(),
+        topState: function(),
+        pushState: function(condition),
+
+        options: {
+            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
+            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
+            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
+        },
+
+        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
+        rules: [...],
+        conditions: {associative list: name ==> set},
+    }
+  }
+
+
+  token location info (@$, _$, etc.): {
+    first_line: n,
+    last_line: n,
+    first_column: n,
+    last_column: n,
+    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
+  }
+
+
+  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
+    text:        (matched text)
+    token:       (the produced terminal token, if any)
+    line:        (yylineno)
+  }
+  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
+    loc:         (yylloc)
+    expected:    (string describing the set of expected tokens)
+    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
+  }
+*/
+var jsonlint = (function(){
+var parser = {trace: function trace() { },
+yy: {},
+symbols_: {"error":2,"JSONString":3,"STRING":4,"JSONNumber":5,"NUMBER":6,"JSONNullLiteral":7,"NULL":8,"JSONBooleanLiteral":9,"TRUE":10,"FALSE":11,"JSONText":12,"JSONValue":13,"EOF":14,"JSONObject":15,"JSONArray":16,"{":17,"}":18,"JSONMemberList":19,"JSONMember":20,":":21,",":22,"[":23,"]":24,"JSONElementList":25,"$accept":0,"$end":1},
+terminals_: {2:"error",4:"STRING",6:"NUMBER",8:"NULL",10:"TRUE",11:"FALSE",14:"EOF",17:"{",18:"}",21:":",22:",",23:"[",24:"]"},
+productions_: [0,[3,1],[5,1],[7,1],[9,1],[9,1],[12,2],[13,1],[13,1],[13,1],[13,1],[13,1],[13,1],[15,2],[15,3],[20,3],[19,1],[19,3],[16,2],[16,3],[25,1],[25,3]],
+performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
+/* this == yyval */
+
+var $0 = $$.length - 1;
+switch (yystate) {
+case 1: // replace escaped characters with actual character
+          this.$ = yytext.replace(/\\(\\|")/g, "$"+"1")
+                     .replace(/\\n/g,'\n')
+                     .replace(/\\r/g,'\r')
+                     .replace(/\\t/g,'\t')
+                     .replace(/\\v/g,'\v')
+                     .replace(/\\f/g,'\f')
+                     .replace(/\\b/g,'\b');
+        
+break;
+case 2:this.$ = Number(yytext);
+break;
+case 3:this.$ = null;
+break;
+case 4:this.$ = true;
+break;
+case 5:this.$ = false;
+break;
+case 6:return this.$ = $$[$0-1];
+break;
+case 13:this.$ = {}; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 14:this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 15:this.$ = [$$[$0-2], $$[$0]];
+break;
+case 16:this.$ = {}; this.$[$$[$0][0]] = $$[$0][1];
+break;
+case 17:this.$ = $$[$0-2]; $$[$0-2][$$[$0][0]] = $$[$0][1];
+break;
+case 18:this.$ = []; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 19:this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 20:this.$ = [$$[$0]];
+break;
+case 21:this.$ = $$[$0-2]; $$[$0-2].push($$[$0]);
+break;
+}
+},
+table: [{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],12:1,13:2,15:7,16:8,17:[1,14],23:[1,15]},{1:[3]},{14:[1,16]},{14:[2,7],18:[2,7],22:[2,7],24:[2,7]},{14:[2,8],18:[2,8],22:[2,8],24:[2,8]},{14:[2,9],18:[2,9],22:[2,9],24:[2,9]},{14:[2,10],18:[2,10],22:[2,10],24:[2,10]},{14:[2,11],18:[2,11],22:[2,11],24:[2,11]},{14:[2,12],18:[2,12],22:[2,12],24:[2,12]},{14:[2,3],18:[2,3],22:[2,3],24:[2,3]},{14:[2,4],18:[2,4],22:[2,4],24:[2,4]},{14:[2,5],18:[2,5],22:[2,5],24:[2,5]},{14:[2,1],18:[2,1],21:[2,1],22:[2,1],24:[2,1]},{14:[2,2],18:[2,2],22:[2,2],24:[2,2]},{3:20,4:[1,12],18:[1,17],19:18,20:19},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:23,15:7,16:8,17:[1,14],23:[1,15],24:[1,21],25:22},{1:[2,6]},{14:[2,13],18:[2,13],22:[2,13],24:[2,13]},{18:[1,24],22:[1,25]},{18:[2,16],22:[2,16]},{21:[1,26]},{14:[2,18],18:[2,18],22:[2,18],24:[2,18]},{22:[1,28],24:[1,27]},{22:[2,20],24:[2,20]},{14:[2,14],18:[2,14],22:[2,14],24:[2,14]},{3:20,4:[1,12],20:29},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:30,15:7,16:8,17:[1,14],23:[1,15]},{14:[2,19],18:[2,19],22:[2,19],24:[2,19]},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:31,15:7,16:8,17:[1,14],23:[1,15]},{18:[2,17],22:[2,17]},{18:[2,15],22:[2,15]},{22:[2,21],24:[2,21]}],
+defaultActions: {16:[2,6]},
+parseError: function parseError(str, hash) {
+    if (hash.recoverable) {
+        this.trace(str);
+    } else {
+        throw new Error(str);
+    }
+},
+parse: function parse(input) {
+    var self = this, stack = [0], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
+    this.lexer.setInput(input);
+    this.lexer.yy = this.yy;
+    this.yy.lexer = this.lexer;
+    this.yy.parser = this;
+    if (typeof this.lexer.yylloc == 'undefined') {
+        this.lexer.yylloc = {};
+    }
+    var yyloc = this.lexer.yylloc;
+    lstack.push(yyloc);
+    var ranges = this.lexer.options && this.lexer.options.ranges;
+    if (typeof this.yy.parseError === 'function') {
+        this.parseError = this.yy.parseError;
+    } else {
+        this.parseError = Object.getPrototypeOf(this).parseError;
+    }
+    function popStack(n) {
+        stack.length = stack.length - 2 * n;
+        vstack.length = vstack.length - n;
+        lstack.length = lstack.length - n;
+    }
+    function lex() {
+        var token;
+        token = self.lexer.lex() || EOF;
+        if (typeof token !== 'number') {
+            token = self.symbols_[token] || token;
+        }
+        return token;
+    }
+    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
+    while (true) {
+        state = stack[stack.length - 1];
+        if (this.defaultActions[state]) {
+            action = this.defaultActions[state];
+        } else {
+            if (symbol === null || typeof symbol == 'undefined') {
+                symbol = lex();
+            }
+            action = table[state] && table[state][symbol];
+        }
+                    if (typeof action === 'undefined' || !action.length || !action[0]) {
+                var errStr = '';
+                expected = [];
+                for (p in table[state]) {
+                    if (this.terminals_[p] && p > TERROR) {
+                        expected.push('\'' + this.terminals_[p] + '\'');
+                    }
+                }
+                if (this.lexer.showPosition) {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + this.lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
+                } else {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
+                }
+                this.parseError(errStr, {
+                    text: this.lexer.match,
+                    token: this.terminals_[symbol] || symbol,
+                    line: this.lexer.yylineno,
+                    loc: yyloc,
+                    expected: expected
+                });
+            }
+        if (action[0] instanceof Array && action.length > 1) {
+            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
+        }
+        switch (action[0]) {
+        case 1:
+            stack.push(symbol);
+            vstack.push(this.lexer.yytext);
+            lstack.push(this.lexer.yylloc);
+            stack.push(action[1]);
+            symbol = null;
+            if (!preErrorSymbol) {
+                yyleng = this.lexer.yyleng;
+                yytext = this.lexer.yytext;
+                yylineno = this.lexer.yylineno;
+                yyloc = this.lexer.yylloc;
+                if (recovering > 0) {
+                    recovering--;
+                }
+            } else {
+                symbol = preErrorSymbol;
+                preErrorSymbol = null;
+            }
+            break;
+        case 2:
+            len = this.productions_[action[1]][1];
+            yyval.$ = vstack[vstack.length - len];
+            yyval._$ = {
+                first_line: lstack[lstack.length - (len || 1)].first_line,
+                last_line: lstack[lstack.length - 1].last_line,
+                first_column: lstack[lstack.length - (len || 1)].first_column,
+                last_column: lstack[lstack.length - 1].last_column
+            };
+            if (ranges) {
+                yyval._$.range = [
+                    lstack[lstack.length - (len || 1)].range[0],
+                    lstack[lstack.length - 1].range[1]
+                ];
+            }
+            r = this.performAction.call(yyval, yytext, yyleng, yylineno, this.yy, action[1], vstack, lstack);
+            if (typeof r !== 'undefined') {
+                return r;
+            }
+            if (len) {
+                stack = stack.slice(0, -1 * len * 2);
+                vstack = vstack.slice(0, -1 * len);
+                lstack = lstack.slice(0, -1 * len);
+            }
+            stack.push(this.productions_[action[1]][0]);
+            vstack.push(yyval.$);
+            lstack.push(yyval._$);
+            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
+            stack.push(newState);
+            break;
+        case 3:
+            return true;
+        }
+    }
+    return true;
+}};
+/* generated by jison-lex 0.2.1 */
+var lexer = (function(){
+var lexer = {
+
+EOF:1,
+
+parseError:function parseError(str, hash) {
+        if (this.yy.parser) {
+            this.yy.parser.parseError(str, hash);
+        } else {
+            throw new Error(str);
+        }
+    },
+
+// resets the lexer, sets new input
+setInput:function (input) {
+        this._input = input;
+        this._more = this._backtrack = this.done = false;
+        this.yylineno = this.yyleng = 0;
+        this.yytext = this.matched = this.match = '';
+        this.conditionStack = ['INITIAL'];
+        this.yylloc = {
+            first_line: 1,
+            first_column: 0,
+            last_line: 1,
+            last_column: 0
+        };
+        if (this.options.ranges) {
+            this.yylloc.range = [0,0];
+        }
+        this.offset = 0;
+        return this;
+    },
+
+// consumes and returns one char from the input
+input:function () {
+        var ch = this._input[0];
+        this.yytext += ch;
+        this.yyleng++;
+        this.offset++;
+        this.match += ch;
+        this.matched += ch;
+        var lines = ch.match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno++;
+            this.yylloc.last_line++;
+        } else {
+            this.yylloc.last_column++;
+        }
+        if (this.options.ranges) {
+            this.yylloc.range[1]++;
+        }
+
+        this._input = this._input.slice(1);
+        return ch;
+    },
+
+// unshifts one char (or a string) into the input
+unput:function (ch) {
+        var len = ch.length;
+        var lines = ch.split(/(?:\r\n?|\n)/g);
+
+        this._input = ch + this._input;
+        this.yytext = this.yytext.substr(0, this.yytext.length - len - 1);
+        //this.yyleng -= len;
+        this.offset -= len;
+        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
+        this.match = this.match.substr(0, this.match.length - 1);
+        this.matched = this.matched.substr(0, this.matched.length - 1);
+
+        if (lines.length - 1) {
+            this.yylineno -= lines.length - 1;
+        }
+        var r = this.yylloc.range;
+
+        this.yylloc = {
+            first_line: this.yylloc.first_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.first_column,
+            last_column: lines ?
+                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
+                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
+              this.yylloc.first_column - len
+        };
+
+        if (this.options.ranges) {
+            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
+        }
+        this.yyleng = this.yytext.length;
+        return this;
+    },
+
+// When called from action, caches matched text and appends it on next action
+more:function () {
+        this._more = true;
+        return this;
+    },
+
+// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
+reject:function () {
+        if (this.options.backtrack_lexer) {
+            this._backtrack = true;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+
+        }
+        return this;
+    },
+
+// retain first n characters of the match
+less:function (n) {
+        this.unput(this.match.slice(n));
+    },
+
+// displays already matched input, i.e. for error messages
+pastInput:function () {
+        var past = this.matched.substr(0, this.matched.length - this.match.length);
+        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
+    },
+
+// displays upcoming input, i.e. for error messages
+upcomingInput:function () {
+        var next = this.match;
+        if (next.length < 20) {
+            next += this._input.substr(0, 20-next.length);
+        }
+        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
+    },
+
+// displays the character position where the lexing error occurred, i.e. for error messages
+showPosition:function () {
+        var pre = this.pastInput();
+        var c = new Array(pre.length + 1).join("-");
+        return pre + this.upcomingInput() + "\n" + c + "^";
+    },
+
+// test the lexed token: return FALSE when not a match, otherwise return token
+test_match:function (match, indexed_rule) {
+        var token,
+            lines,
+            backup;
+
+        if (this.options.backtrack_lexer) {
+            // save context
+            backup = {
+                yylineno: this.yylineno,
+                yylloc: {
+                    first_line: this.yylloc.first_line,
+                    last_line: this.last_line,
+                    first_column: this.yylloc.first_column,
+                    last_column: this.yylloc.last_column
+                },
+                yytext: this.yytext,
+                match: this.match,
+                matches: this.matches,
+                matched: this.matched,
+                yyleng: this.yyleng,
+                offset: this.offset,
+                _more: this._more,
+                _input: this._input,
+                yy: this.yy,
+                conditionStack: this.conditionStack.slice(0),
+                done: this.done
+            };
+            if (this.options.ranges) {
+                backup.yylloc.range = this.yylloc.range.slice(0);
+            }
+        }
+
+        lines = match[0].match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno += lines.length;
+        }
+        this.yylloc = {
+            first_line: this.yylloc.last_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.last_column,
+            last_column: lines ?
+                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
+                         this.yylloc.last_column + match[0].length
+        };
+        this.yytext += match[0];
+        this.match += match[0];
+        this.matches = match;
+        this.yyleng = this.yytext.length;
+        if (this.options.ranges) {
+            this.yylloc.range = [this.offset, this.offset += this.yyleng];
+        }
+        this._more = false;
+        this._backtrack = false;
+        this._input = this._input.slice(match[0].length);
+        this.matched += match[0];
+        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
+        if (this.done && this._input) {
+            this.done = false;
+        }
+        if (token) {
+            return token;
+        } else if (this._backtrack) {
+            // recover context
+            for (var k in backup) {
+                this[k] = backup[k];
+            }
+            return false; // rule action called reject() implying the next rule should be tested instead.
+        }
+        return false;
+    },
+
+// return next match in input
+next:function () {
+        if (this.done) {
+            return this.EOF;
+        }
+        if (!this._input) {
+            this.done = true;
+        }
+
+        var token,
+            match,
+            tempMatch,
+            index;
+        if (!this._more) {
+            this.yytext = '';
+            this.match = '';
+        }
+        var rules = this._currentRules();
+        for (var i = 0; i < rules.length; i++) {
+            tempMatch = this._input.match(this.rules[rules[i]]);
+            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
+                match = tempMatch;
+                index = i;
+                if (this.options.backtrack_lexer) {
+                    token = this.test_match(tempMatch, rules[i]);
+                    if (token !== false) {
+                        return token;
+                    } else if (this._backtrack) {
+                        match = false;
+                        continue; // rule action called reject() implying a rule MISmatch.
+                    } else {
+                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+                        return false;
+                    }
+                } else if (!this.options.flex) {
+                    break;
+                }
+            }
+        }
+        if (match) {
+            token = this.test_match(match, rules[index]);
+            if (token !== false) {
+                return token;
+            }
+            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+            return false;
+        }
+        if (this._input === "") {
+            return this.EOF;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+        }
+    },
+
+// return next match that has a token
+lex:function lex() {
+        var r = this.next();
+        if (r) {
+            return r;
+        } else {
+            return this.lex();
+        }
+    },
+
+// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
+begin:function begin(condition) {
+        this.conditionStack.push(condition);
+    },
+
+// pop the previously active lexer condition state off the condition stack
+popState:function popState() {
+        var n = this.conditionStack.length - 1;
+        if (n > 0) {
+            return this.conditionStack.pop();
+        } else {
+            return this.conditionStack[0];
+        }
+    },
+
+// produce the lexer rule set which is active for the currently active lexer condition state
+_currentRules:function _currentRules() {
+        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
+            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
+        } else {
+            return this.conditions["INITIAL"].rules;
+        }
+    },
+
+// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
+topState:function topState(n) {
+        n = this.conditionStack.length - 1 - Math.abs(n || 0);
+        if (n >= 0) {
+            return this.conditionStack[n];
+        } else {
+            return "INITIAL";
+        }
+    },
+
+// alias for begin(condition)
+pushState:function pushState(condition) {
+        this.begin(condition);
+    },
+
+// return the number of states currently on the stack
+stateStackSize:function stateStackSize() {
+        return this.conditionStack.length;
+    },
+options: {},
+performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
+
+var YYSTATE=YY_START;
+switch($avoiding_name_collisions) {
+case 0:/* skip whitespace */
+break;
+case 1:return 6
+break;
+case 2:yy_.yytext = yy_.yytext.substr(1,yy_.yyleng-2); return 4
+break;
+case 3:return 17
+break;
+case 4:return 18
+break;
+case 5:return 23
+break;
+case 6:return 24
+break;
+case 7:return 22
+break;
+case 8:return 21
+break;
+case 9:return 10
+break;
+case 10:return 11
+break;
+case 11:return 8
+break;
+case 12:return 14
+break;
+case 13:return 'INVALID'
+break;
+}
+},
+rules: [/^(?:\s+)/,/^(?:(-?([0-9]|[1-9][0-9]+))(\.[0-9]+)?([eE][-+]?[0-9]+)?\b)/,/^(?:"(?:\\[\\"bfnrt/]|\\u[a-fA-F0-9]{4}|[^\\\0-\x09\x0a-\x1f"])*")/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?::)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:null\b)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13],"inclusive":true}}
+};
+return lexer;
+})();
+parser.lexer = lexer;
+function Parser () {
+  this.yy = {};
+}
+Parser.prototype = parser;parser.Parser = Parser;
+return new Parser;
+})();
+
+
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+exports.parser = jsonlint;
+exports.Parser = jsonlint.Parser;
+exports.parse = function () { return jsonlint.parse.apply(jsonlint, arguments); };
+exports.main = function commonjsMain(args) {
+    if (!args[1]) {
+        console.log('Usage: '+args[0]+' FILE');
+        process.exit(1);
+    }
+    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
+    return exports.parser.parse(source);
+};
+if (typeof module !== 'undefined' && require.main === module) {
+  exports.main(process.argv.slice(1));
+}
+}
+}).call(this,require('_process'))
+},{"_process":4,"fs":1,"path":3}],10:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -675,7 +1986,7 @@ var keyMirror = function(obj) {
 
 module.exports = keyMirror;
 
-},{}],6:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*
 	Leaflet.draw, a plugin that adds drawing and editing tools to Leaflet powered maps.
 	(c) 2012-2013, Jacob Toye, Smartrak
@@ -686,7 +1997,7 @@ module.exports = keyMirror;
 */
 !function(t,e){L.drawVersion="0.2.4-dev",L.drawLocal={draw:{toolbar:{actions:{title:"Cancel drawing",text:"Cancel"},undo:{title:"Delete last point drawn",text:"Delete last point"},buttons:{polyline:"Draw a polyline",polygon:"Draw a polygon",rectangle:"Draw a rectangle",circle:"Draw a circle",marker:"Draw a marker"}},handlers:{circle:{tooltip:{start:"Click and drag to draw circle."}},marker:{tooltip:{start:"Click map to place marker."}},polygon:{tooltip:{start:"Click to start drawing shape.",cont:"Click to continue drawing shape.",end:"Click first point to close this shape."}},polyline:{error:"<strong>Error:</strong> shape edges cannot cross!",tooltip:{start:"Click to start drawing line.",cont:"Click to continue drawing line.",end:"Click last point to finish line."}},rectangle:{tooltip:{start:"Click and drag to draw rectangle."}},simpleshape:{tooltip:{end:"Release mouse to finish drawing."}}}},edit:{toolbar:{actions:{save:{title:"Save changes.",text:"Save"},cancel:{title:"Cancel editing, discards all changes.",text:"Cancel"}},buttons:{edit:"Edit layers.",editDisabled:"No layers to edit.",remove:"Delete layers.",removeDisabled:"No layers to delete."}},handlers:{edit:{tooltip:{text:"Drag handles, or marker to edit feature.",subtext:"Click cancel to undo changes."}},remove:{tooltip:{text:"Click on a feature to remove"}}}}},L.Draw={},L.Draw.Feature=L.Handler.extend({includes:L.Mixin.Events,initialize:function(t,e){this._map=t,this._container=t._container,this._overlayPane=t._panes.overlayPane,this._popupPane=t._panes.popupPane,e&&e.shapeOptions&&(e.shapeOptions=L.Util.extend({},this.options.shapeOptions,e.shapeOptions)),L.setOptions(this,e)},enable:function(){this._enabled||(this.fire("enabled",{handler:this.type}),this._map.fire("draw:drawstart",{layerType:this.type}),L.Handler.prototype.enable.call(this))},disable:function(){this._enabled&&(L.Handler.prototype.disable.call(this),this._map.fire("draw:drawstop",{layerType:this.type}),this.fire("disabled",{handler:this.type}))},addHooks:function(){var t=this._map;t&&(L.DomUtil.disableTextSelection(),t.getContainer().focus(),this._tooltip=new L.Tooltip(this._map),L.DomEvent.on(this._container,"keyup",this._cancelDrawing,this))},removeHooks:function(){this._map&&(L.DomUtil.enableTextSelection(),this._tooltip.dispose(),this._tooltip=null,L.DomEvent.off(this._container,"keyup",this._cancelDrawing,this))},setOptions:function(t){L.setOptions(this,t)},_fireCreatedEvent:function(t){this._map.fire("draw:created",{layer:t,layerType:this.type})},_cancelDrawing:function(t){27===t.keyCode&&this.disable()}}),L.Draw.Polyline=L.Draw.Feature.extend({statics:{TYPE:"polyline"},Poly:L.Polyline,options:{allowIntersection:!0,repeatMode:!1,drawError:{color:"#b00b00",timeout:2500},icon:new L.DivIcon({iconSize:new L.Point(8,8),className:"leaflet-div-icon leaflet-editing-icon"}),guidelineDistance:20,maxGuideLineLength:4e3,shapeOptions:{stroke:!0,color:"#f06eaa",weight:4,opacity:.5,fill:!1,clickable:!0},metric:!0,showLength:!0,zIndexOffset:2e3},initialize:function(t,e){this.options.drawError.message=L.drawLocal.draw.handlers.polyline.error,e&&e.drawError&&(e.drawError=L.Util.extend({},this.options.drawError,e.drawError)),this.type=L.Draw.Polyline.TYPE,L.Draw.Feature.prototype.initialize.call(this,t,e)},addHooks:function(){L.Draw.Feature.prototype.addHooks.call(this),this._map&&(this._markers=[],this._markerGroup=new L.LayerGroup,this._map.addLayer(this._markerGroup),this._poly=new L.Polyline([],this.options.shapeOptions),this._tooltip.updateContent(this._getTooltipText()),this._mouseMarker||(this._mouseMarker=L.marker(this._map.getCenter(),{icon:L.divIcon({className:"leaflet-mouse-marker",iconAnchor:[20,20],iconSize:[40,40]}),opacity:0,zIndexOffset:this.options.zIndexOffset})),this._mouseMarker.on("mousedown",this._onMouseDown,this).addTo(this._map),this._map.on("mousemove",this._onMouseMove,this).on("mouseup",this._onMouseUp,this).on("zoomend",this._onZoomEnd,this))},removeHooks:function(){L.Draw.Feature.prototype.removeHooks.call(this),this._clearHideErrorTimeout(),this._cleanUpShape(),this._map.removeLayer(this._markerGroup),delete this._markerGroup,delete this._markers,this._map.removeLayer(this._poly),delete this._poly,this._mouseMarker.off("mousedown",this._onMouseDown,this).off("mouseup",this._onMouseUp,this),this._map.removeLayer(this._mouseMarker),delete this._mouseMarker,this._clearGuides(),this._map.off("mousemove",this._onMouseMove,this).off("zoomend",this._onZoomEnd,this)},deleteLastVertex:function(){if(!(this._markers.length<=1)){var t=this._markers.pop(),e=this._poly,i=this._poly.spliceLatLngs(e.getLatLngs().length-1,1)[0];this._markerGroup.removeLayer(t),e.getLatLngs().length<2&&this._map.removeLayer(e),this._vertexChanged(i,!1)}},addVertex:function(t){var e=this._markers.length;return e>0&&!this.options.allowIntersection&&this._poly.newLatLngIntersects(t)?(this._showErrorTooltip(),void 0):(this._errorShown&&this._hideErrorTooltip(),this._markers.push(this._createMarker(t)),this._poly.addLatLng(t),2===this._poly.getLatLngs().length&&this._map.addLayer(this._poly),this._vertexChanged(t,!0),void 0)},_finishShape:function(){var t=this._poly.newLatLngIntersects(this._poly.getLatLngs()[0],!0);return!this.options.allowIntersection&&t||!this._shapeIsValid()?(this._showErrorTooltip(),void 0):(this._fireCreatedEvent(),this.disable(),this.options.repeatMode&&this.enable(),void 0)},_shapeIsValid:function(){return!0},_onZoomEnd:function(){this._updateGuide()},_onMouseMove:function(t){var e=t.layerPoint,i=t.latlng;this._currentLatLng=i,this._updateTooltip(i),this._updateGuide(e),this._mouseMarker.setLatLng(i),L.DomEvent.preventDefault(t.originalEvent)},_vertexChanged:function(t,e){this._updateFinishHandler(),this._updateRunningMeasure(t,e),this._clearGuides(),this._updateTooltip()},_onMouseDown:function(t){var e=t.originalEvent;this._mouseDownOrigin=L.point(e.clientX,e.clientY)},_onMouseUp:function(e){if(this._mouseDownOrigin){var i=L.point(e.originalEvent.clientX,e.originalEvent.clientY).distanceTo(this._mouseDownOrigin);Math.abs(i)<9*(t.devicePixelRatio||1)&&this.addVertex(e.latlng)}this._mouseDownOrigin=null},_updateFinishHandler:function(){var t=this._markers.length;t>1&&this._markers[t-1].on("click",this._finishShape,this),t>2&&this._markers[t-2].off("click",this._finishShape,this)},_createMarker:function(t){var e=new L.Marker(t,{icon:this.options.icon,zIndexOffset:2*this.options.zIndexOffset});return this._markerGroup.addLayer(e),e},_updateGuide:function(t){var e=this._markers.length;e>0&&(t=t||this._map.latLngToLayerPoint(this._currentLatLng),this._clearGuides(),this._drawGuide(this._map.latLngToLayerPoint(this._markers[e-1].getLatLng()),t))},_updateTooltip:function(t){var e=this._getTooltipText();t&&this._tooltip.updatePosition(t),this._errorShown||this._tooltip.updateContent(e)},_drawGuide:function(t,e){var i,o,a,s=Math.floor(Math.sqrt(Math.pow(e.x-t.x,2)+Math.pow(e.y-t.y,2))),r=this.options.guidelineDistance,n=this.options.maxGuideLineLength,l=s>n?s-n:r;for(this._guidesContainer||(this._guidesContainer=L.DomUtil.create("div","leaflet-draw-guides",this._overlayPane));s>l;l+=this.options.guidelineDistance)i=l/s,o={x:Math.floor(t.x*(1-i)+i*e.x),y:Math.floor(t.y*(1-i)+i*e.y)},a=L.DomUtil.create("div","leaflet-draw-guide-dash",this._guidesContainer),a.style.backgroundColor=this._errorShown?this.options.drawError.color:this.options.shapeOptions.color,L.DomUtil.setPosition(a,o)},_updateGuideColor:function(t){if(this._guidesContainer)for(var e=0,i=this._guidesContainer.childNodes.length;i>e;e++)this._guidesContainer.childNodes[e].style.backgroundColor=t},_clearGuides:function(){if(this._guidesContainer)for(;this._guidesContainer.firstChild;)this._guidesContainer.removeChild(this._guidesContainer.firstChild)},_getTooltipText:function(){var t,e,i=this.options.showLength;return 0===this._markers.length?t={text:L.drawLocal.draw.handlers.polyline.tooltip.start}:(e=i?this._getMeasurementString():"",t=1===this._markers.length?{text:L.drawLocal.draw.handlers.polyline.tooltip.cont,subtext:e}:{text:L.drawLocal.draw.handlers.polyline.tooltip.end,subtext:e}),t},_updateRunningMeasure:function(t,e){var i,o,a=this._markers.length;1===this._markers.length?this._measurementRunningTotal=0:(i=a-(e?2:1),o=t.distanceTo(this._markers[i].getLatLng()),this._measurementRunningTotal+=o*(e?1:-1))},_getMeasurementString:function(){var t,e=this._currentLatLng,i=this._markers[this._markers.length-1].getLatLng();return t=this._measurementRunningTotal+e.distanceTo(i),L.GeometryUtil.readableDistance(t,this.options.metric)},_showErrorTooltip:function(){this._errorShown=!0,this._tooltip.showAsError().updateContent({text:this.options.drawError.message}),this._updateGuideColor(this.options.drawError.color),this._poly.setStyle({color:this.options.drawError.color}),this._clearHideErrorTimeout(),this._hideErrorTimeout=setTimeout(L.Util.bind(this._hideErrorTooltip,this),this.options.drawError.timeout)},_hideErrorTooltip:function(){this._errorShown=!1,this._clearHideErrorTimeout(),this._tooltip.removeError().updateContent(this._getTooltipText()),this._updateGuideColor(this.options.shapeOptions.color),this._poly.setStyle({color:this.options.shapeOptions.color})},_clearHideErrorTimeout:function(){this._hideErrorTimeout&&(clearTimeout(this._hideErrorTimeout),this._hideErrorTimeout=null)},_cleanUpShape:function(){this._markers.length>1&&this._markers[this._markers.length-1].off("click",this._finishShape,this)},_fireCreatedEvent:function(){var t=new this.Poly(this._poly.getLatLngs(),this.options.shapeOptions);L.Draw.Feature.prototype._fireCreatedEvent.call(this,t)}}),L.Draw.Polygon=L.Draw.Polyline.extend({statics:{TYPE:"polygon"},Poly:L.Polygon,options:{showArea:!1,shapeOptions:{stroke:!0,color:"#f06eaa",weight:4,opacity:.5,fill:!0,fillColor:null,fillOpacity:.2,clickable:!0}},initialize:function(t,e){L.Draw.Polyline.prototype.initialize.call(this,t,e),this.type=L.Draw.Polygon.TYPE},_updateFinishHandler:function(){var t=this._markers.length;1===t&&this._markers[0].on("click",this._finishShape,this),t>2&&(this._markers[t-1].on("dblclick",this._finishShape,this),t>3&&this._markers[t-2].off("dblclick",this._finishShape,this))},_getTooltipText:function(){var t,e;return 0===this._markers.length?t=L.drawLocal.draw.handlers.polygon.tooltip.start:this._markers.length<3?t=L.drawLocal.draw.handlers.polygon.tooltip.cont:(t=L.drawLocal.draw.handlers.polygon.tooltip.end,e=this._getMeasurementString()),{text:t,subtext:e}},_getMeasurementString:function(){var t=this._area;return t?L.GeometryUtil.readableArea(t,this.options.metric):null},_shapeIsValid:function(){return this._markers.length>=3},_vertexChanged:function(t,e){var i;!this.options.allowIntersection&&this.options.showArea&&(i=this._poly.getLatLngs(),this._area=L.GeometryUtil.geodesicArea(i)),L.Draw.Polyline.prototype._vertexChanged.call(this,t,e)},_cleanUpShape:function(){var t=this._markers.length;t>0&&(this._markers[0].off("click",this._finishShape,this),t>2&&this._markers[t-1].off("dblclick",this._finishShape,this))}}),L.SimpleShape={},L.Draw.SimpleShape=L.Draw.Feature.extend({options:{repeatMode:!1},initialize:function(t,e){this._endLabelText=L.drawLocal.draw.handlers.simpleshape.tooltip.end,L.Draw.Feature.prototype.initialize.call(this,t,e)},addHooks:function(){L.Draw.Feature.prototype.addHooks.call(this),this._map&&(this._mapDraggable=this._map.dragging.enabled(),this._mapDraggable&&this._map.dragging.disable(),this._container.style.cursor="crosshair",this._tooltip.updateContent({text:this._initialLabelText}),this._map.on("mousedown",this._onMouseDown,this).on("mousemove",this._onMouseMove,this))},removeHooks:function(){L.Draw.Feature.prototype.removeHooks.call(this),this._map&&(this._mapDraggable&&this._map.dragging.enable(),this._container.style.cursor="",this._map.off("mousedown",this._onMouseDown,this).off("mousemove",this._onMouseMove,this),L.DomEvent.off(e,"mouseup",this._onMouseUp,this),this._shape&&(this._map.removeLayer(this._shape),delete this._shape)),this._isDrawing=!1},_onMouseDown:function(t){this._isDrawing=!0,this._startLatLng=t.latlng,L.DomEvent.on(e,"mouseup",this._onMouseUp,this).preventDefault(t.originalEvent)},_onMouseMove:function(t){var e=t.latlng;this._tooltip.updatePosition(e),this._isDrawing&&(this._tooltip.updateContent({text:this._endLabelText}),this._drawShape(e))},_onMouseUp:function(){this._shape&&this._fireCreatedEvent(),this.disable(),this.options.repeatMode&&this.enable()}}),L.Draw.Rectangle=L.Draw.SimpleShape.extend({statics:{TYPE:"rectangle"},options:{shapeOptions:{stroke:!0,color:"#f06eaa",weight:4,opacity:.5,fill:!0,fillColor:null,fillOpacity:.2,clickable:!0}},initialize:function(t,e){this.type=L.Draw.Rectangle.TYPE,this._initialLabelText=L.drawLocal.draw.handlers.rectangle.tooltip.start,L.Draw.SimpleShape.prototype.initialize.call(this,t,e)},_drawShape:function(t){this._shape?this._shape.setBounds(new L.LatLngBounds(this._startLatLng,t)):(this._shape=new L.Rectangle(new L.LatLngBounds(this._startLatLng,t),this.options.shapeOptions),this._map.addLayer(this._shape))},_fireCreatedEvent:function(){var t=new L.Rectangle(this._shape.getBounds(),this.options.shapeOptions);L.Draw.SimpleShape.prototype._fireCreatedEvent.call(this,t)}}),L.Draw.Circle=L.Draw.SimpleShape.extend({statics:{TYPE:"circle"},options:{shapeOptions:{stroke:!0,color:"#f06eaa",weight:4,opacity:.5,fill:!0,fillColor:null,fillOpacity:.2,clickable:!0},showRadius:!0,metric:!0},initialize:function(t,e){this.type=L.Draw.Circle.TYPE,this._initialLabelText=L.drawLocal.draw.handlers.circle.tooltip.start,L.Draw.SimpleShape.prototype.initialize.call(this,t,e)},_drawShape:function(t){this._shape?this._shape.setRadius(this._startLatLng.distanceTo(t)):(this._shape=new L.Circle(this._startLatLng,this._startLatLng.distanceTo(t),this.options.shapeOptions),this._map.addLayer(this._shape))},_fireCreatedEvent:function(){var t=new L.Circle(this._startLatLng,this._shape.getRadius(),this.options.shapeOptions);L.Draw.SimpleShape.prototype._fireCreatedEvent.call(this,t)},_onMouseMove:function(t){var e,i=t.latlng,o=this.options.showRadius,a=this.options.metric;this._tooltip.updatePosition(i),this._isDrawing&&(this._drawShape(i),e=this._shape.getRadius().toFixed(1),this._tooltip.updateContent({text:this._endLabelText,subtext:o?"Radius: "+L.GeometryUtil.readableDistance(e,a):""}))}}),L.Draw.Marker=L.Draw.Feature.extend({statics:{TYPE:"marker"},options:{icon:new L.Icon.Default,repeatMode:!1,zIndexOffset:2e3},initialize:function(t,e){this.type=L.Draw.Marker.TYPE,L.Draw.Feature.prototype.initialize.call(this,t,e)},addHooks:function(){L.Draw.Feature.prototype.addHooks.call(this),this._map&&(this._tooltip.updateContent({text:L.drawLocal.draw.handlers.marker.tooltip.start}),this._mouseMarker||(this._mouseMarker=L.marker(this._map.getCenter(),{icon:L.divIcon({className:"leaflet-mouse-marker",iconAnchor:[20,20],iconSize:[40,40]}),opacity:0,zIndexOffset:this.options.zIndexOffset})),this._mouseMarker.on("click",this._onClick,this).addTo(this._map),this._map.on("mousemove",this._onMouseMove,this))},removeHooks:function(){L.Draw.Feature.prototype.removeHooks.call(this),this._map&&(this._marker&&(this._marker.off("click",this._onClick,this),this._map.off("click",this._onClick,this).removeLayer(this._marker),delete this._marker),this._mouseMarker.off("click",this._onClick,this),this._map.removeLayer(this._mouseMarker),delete this._mouseMarker,this._map.off("mousemove",this._onMouseMove,this))},_onMouseMove:function(t){var e=t.latlng;this._tooltip.updatePosition(e),this._mouseMarker.setLatLng(e),this._marker?(e=this._mouseMarker.getLatLng(),this._marker.setLatLng(e)):(this._marker=new L.Marker(e,{icon:this.options.icon,zIndexOffset:this.options.zIndexOffset}),this._marker.on("click",this._onClick,this),this._map.on("click",this._onClick,this).addLayer(this._marker))},_onClick:function(){this._fireCreatedEvent(),this.disable(),this.options.repeatMode&&this.enable()},_fireCreatedEvent:function(){var t=new L.Marker(this._marker.getLatLng(),{icon:this.options.icon});L.Draw.Feature.prototype._fireCreatedEvent.call(this,t)}}),L.Edit=L.Edit||{},L.Edit.Poly=L.Handler.extend({options:{icon:new L.DivIcon({iconSize:new L.Point(8,8),className:"leaflet-div-icon leaflet-editing-icon"})},initialize:function(t,e){this._poly=t,L.setOptions(this,e)},addHooks:function(){this._poly._map&&(this._markerGroup||this._initMarkers(),this._poly._map.addLayer(this._markerGroup))},removeHooks:function(){this._poly._map&&(this._poly._map.removeLayer(this._markerGroup),delete this._markerGroup,delete this._markers)},updateMarkers:function(){this._markerGroup.clearLayers(),this._initMarkers()},_initMarkers:function(){this._markerGroup||(this._markerGroup=new L.LayerGroup),this._markers=[];var t,e,i,o,a=this._poly._latlngs;for(t=0,i=a.length;i>t;t++)o=this._createMarker(a[t],t),o.on("click",this._onMarkerClick,this),this._markers.push(o);var s,r;for(t=0,e=i-1;i>t;e=t++)(0!==t||L.Polygon&&this._poly instanceof L.Polygon)&&(s=this._markers[e],r=this._markers[t],this._createMiddleMarker(s,r),this._updatePrevNext(s,r))},_createMarker:function(t,e){var i=new L.Marker(t,{draggable:!0,icon:this.options.icon});return i._origLatLng=t,i._index=e,i.on("drag",this._onMarkerDrag,this),i.on("dragend",this._fireEdit,this),this._markerGroup.addLayer(i),i},_removeMarker:function(t){var e=t._index;this._markerGroup.removeLayer(t),this._markers.splice(e,1),this._poly.spliceLatLngs(e,1),this._updateIndexes(e,-1),t.off("drag",this._onMarkerDrag,this).off("dragend",this._fireEdit,this).off("click",this._onMarkerClick,this)},_fireEdit:function(){this._poly.edited=!0,this._poly.fire("edit")},_onMarkerDrag:function(t){var e=t.target;L.extend(e._origLatLng,e._latlng),e._middleLeft&&e._middleLeft.setLatLng(this._getMiddleLatLng(e._prev,e)),e._middleRight&&e._middleRight.setLatLng(this._getMiddleLatLng(e,e._next)),this._poly.redraw()},_onMarkerClick:function(t){var e=L.Polygon&&this._poly instanceof L.Polygon?4:3,i=t.target;this._poly._latlngs.length<e||(this._removeMarker(i),this._updatePrevNext(i._prev,i._next),i._middleLeft&&this._markerGroup.removeLayer(i._middleLeft),i._middleRight&&this._markerGroup.removeLayer(i._middleRight),i._prev&&i._next?this._createMiddleMarker(i._prev,i._next):i._prev?i._next||(i._prev._middleRight=null):i._next._middleLeft=null,this._fireEdit())},_updateIndexes:function(t,e){this._markerGroup.eachLayer(function(i){i._index>t&&(i._index+=e)})},_createMiddleMarker:function(t,e){var i,o,a,s=this._getMiddleLatLng(t,e),r=this._createMarker(s);r.setOpacity(.6),t._middleRight=e._middleLeft=r,o=function(){var o=e._index;r._index=o,r.off("click",i,this).on("click",this._onMarkerClick,this),s.lat=r.getLatLng().lat,s.lng=r.getLatLng().lng,this._poly.spliceLatLngs(o,0,s),this._markers.splice(o,0,r),r.setOpacity(1),this._updateIndexes(o,1),e._index++,this._updatePrevNext(t,r),this._updatePrevNext(r,e),this._poly.fire("editstart")},a=function(){r.off("dragstart",o,this),r.off("dragend",a,this),this._createMiddleMarker(t,r),this._createMiddleMarker(r,e)},i=function(){o.call(this),a.call(this),this._fireEdit()},r.on("click",i,this).on("dragstart",o,this).on("dragend",a,this),this._markerGroup.addLayer(r)},_updatePrevNext:function(t,e){t&&(t._next=e),e&&(e._prev=t)},_getMiddleLatLng:function(t,e){var i=this._poly._map,o=i.project(t.getLatLng()),a=i.project(e.getLatLng());return i.unproject(o._add(a)._divideBy(2))}}),L.Polyline.addInitHook(function(){this.editing||(L.Edit.Poly&&(this.editing=new L.Edit.Poly(this),this.options.editable&&this.editing.enable()),this.on("add",function(){this.editing&&this.editing.enabled()&&this.editing.addHooks()}),this.on("remove",function(){this.editing&&this.editing.enabled()&&this.editing.removeHooks()}))}),L.Edit=L.Edit||{},L.Edit.SimpleShape=L.Handler.extend({options:{moveIcon:new L.DivIcon({iconSize:new L.Point(8,8),className:"leaflet-div-icon leaflet-editing-icon leaflet-edit-move"}),resizeIcon:new L.DivIcon({iconSize:new L.Point(8,8),className:"leaflet-div-icon leaflet-editing-icon leaflet-edit-resize"})},initialize:function(t,e){this._shape=t,L.Util.setOptions(this,e)},addHooks:function(){this._shape._map&&(this._map=this._shape._map,this._markerGroup||this._initMarkers(),this._map.addLayer(this._markerGroup))},removeHooks:function(){if(this._shape._map){this._unbindMarker(this._moveMarker);for(var t=0,e=this._resizeMarkers.length;e>t;t++)this._unbindMarker(this._resizeMarkers[t]);this._resizeMarkers=null,this._map.removeLayer(this._markerGroup),delete this._markerGroup}this._map=null},updateMarkers:function(){this._markerGroup.clearLayers(),this._initMarkers()},_initMarkers:function(){this._markerGroup||(this._markerGroup=new L.LayerGroup),this._createMoveMarker(),this._createResizeMarker()},_createMoveMarker:function(){},_createResizeMarker:function(){},_createMarker:function(t,e){var i=new L.Marker(t,{draggable:!0,icon:e,zIndexOffset:10});return this._bindMarker(i),this._markerGroup.addLayer(i),i},_bindMarker:function(t){t.on("dragstart",this._onMarkerDragStart,this).on("drag",this._onMarkerDrag,this).on("dragend",this._onMarkerDragEnd,this)},_unbindMarker:function(t){t.off("dragstart",this._onMarkerDragStart,this).off("drag",this._onMarkerDrag,this).off("dragend",this._onMarkerDragEnd,this)},_onMarkerDragStart:function(t){var e=t.target;e.setOpacity(0),this._shape.fire("editstart")},_fireEdit:function(){this._shape.edited=!0,this._shape.fire("edit")},_onMarkerDrag:function(t){var e=t.target,i=e.getLatLng();e===this._moveMarker?this._move(i):this._resize(i),this._shape.redraw()},_onMarkerDragEnd:function(t){var e=t.target;e.setOpacity(1),this._fireEdit()},_move:function(){},_resize:function(){}}),L.Edit=L.Edit||{},L.Edit.Rectangle=L.Edit.SimpleShape.extend({_createMoveMarker:function(){var t=this._shape.getBounds(),e=t.getCenter();this._moveMarker=this._createMarker(e,this.options.moveIcon)},_createResizeMarker:function(){var t=this._getCorners();this._resizeMarkers=[];for(var e=0,i=t.length;i>e;e++)this._resizeMarkers.push(this._createMarker(t[e],this.options.resizeIcon)),this._resizeMarkers[e]._cornerIndex=e},_onMarkerDragStart:function(t){L.Edit.SimpleShape.prototype._onMarkerDragStart.call(this,t);var e=this._getCorners(),i=t.target,o=i._cornerIndex;this._oppositeCorner=e[(o+2)%4],this._toggleCornerMarkers(0,o)},_onMarkerDragEnd:function(t){var e,i,o=t.target;o===this._moveMarker&&(e=this._shape.getBounds(),i=e.getCenter(),o.setLatLng(i)),this._toggleCornerMarkers(1),this._repositionCornerMarkers(),L.Edit.SimpleShape.prototype._onMarkerDragEnd.call(this,t)},_move:function(t){for(var e,i=this._shape.getLatLngs(),o=this._shape.getBounds(),a=o.getCenter(),s=[],r=0,n=i.length;n>r;r++)e=[i[r].lat-a.lat,i[r].lng-a.lng],s.push([t.lat+e[0],t.lng+e[1]]);this._shape.setLatLngs(s),this._repositionCornerMarkers()},_resize:function(t){var e;this._shape.setBounds(L.latLngBounds(t,this._oppositeCorner)),e=this._shape.getBounds(),this._moveMarker.setLatLng(e.getCenter())},_getCorners:function(){var t=this._shape.getBounds(),e=t.getNorthWest(),i=t.getNorthEast(),o=t.getSouthEast(),a=t.getSouthWest();return[e,i,o,a]},_toggleCornerMarkers:function(t){for(var e=0,i=this._resizeMarkers.length;i>e;e++)this._resizeMarkers[e].setOpacity(t)},_repositionCornerMarkers:function(){for(var t=this._getCorners(),e=0,i=this._resizeMarkers.length;i>e;e++)this._resizeMarkers[e].setLatLng(t[e])}}),L.Rectangle.addInitHook(function(){L.Edit.Rectangle&&(this.editing=new L.Edit.Rectangle(this),this.options.editable&&this.editing.enable())}),L.Edit=L.Edit||{},L.Edit.Circle=L.Edit.SimpleShape.extend({_createMoveMarker:function(){var t=this._shape.getLatLng();this._moveMarker=this._createMarker(t,this.options.moveIcon)},_createResizeMarker:function(){var t=this._shape.getLatLng(),e=this._getResizeMarkerPoint(t);this._resizeMarkers=[],this._resizeMarkers.push(this._createMarker(e,this.options.resizeIcon))},_getResizeMarkerPoint:function(t){var e=this._shape._radius*Math.cos(Math.PI/4),i=this._map.project(t);return this._map.unproject([i.x+e,i.y-e])},_move:function(t){var e=this._getResizeMarkerPoint(t);this._resizeMarkers[0].setLatLng(e),this._shape.setLatLng(t)},_resize:function(t){var e=this._moveMarker.getLatLng(),i=e.distanceTo(t);this._shape.setRadius(i)}}),L.Circle.addInitHook(function(){L.Edit.Circle&&(this.editing=new L.Edit.Circle(this),this.options.editable&&this.editing.enable()),this.on("add",function(){this.editing&&this.editing.enabled()&&this.editing.addHooks()}),this.on("remove",function(){this.editing&&this.editing.enabled()&&this.editing.removeHooks()})}),L.LatLngUtil={cloneLatLngs:function(t){for(var e=[],i=0,o=t.length;o>i;i++)e.push(this.cloneLatLng(t[i]));return e},cloneLatLng:function(t){return L.latLng(t.lat,t.lng)}},L.GeometryUtil=L.extend(L.GeometryUtil||{},{geodesicArea:function(t){var e,i,o=t.length,a=0,s=L.LatLng.DEG_TO_RAD;if(o>2){for(var r=0;o>r;r++)e=t[r],i=t[(r+1)%o],a+=(i.lng-e.lng)*s*(2+Math.sin(e.lat*s)+Math.sin(i.lat*s));a=6378137*a*6378137/2}return Math.abs(a)},readableArea:function(t,e){var i;return e?i=t>=1e4?(1e-4*t).toFixed(2)+" ha":t.toFixed(2)+" m&sup2;":(t*=.836127,i=t>=3097600?(t/3097600).toFixed(2)+" mi&sup2;":t>=4840?(t/4840).toFixed(2)+" acres":Math.ceil(t)+" yd&sup2;"),i},readableDistance:function(t,e){var i;return e?i=t>1e3?(t/1e3).toFixed(2)+" km":Math.ceil(t)+" m":(t*=1.09361,i=t>1760?(t/1760).toFixed(2)+" miles":Math.ceil(t)+" yd"),i}}),L.Util.extend(L.LineUtil,{segmentsIntersect:function(t,e,i,o){return this._checkCounterclockwise(t,i,o)!==this._checkCounterclockwise(e,i,o)&&this._checkCounterclockwise(t,e,i)!==this._checkCounterclockwise(t,e,o)},_checkCounterclockwise:function(t,e,i){return(i.y-t.y)*(e.x-t.x)>(e.y-t.y)*(i.x-t.x)}}),L.Polyline.include({intersects:function(){var t,e,i,o=this._originalPoints,a=o?o.length:0;if(this._tooFewPointsForIntersection())return!1;for(t=a-1;t>=3;t--)if(e=o[t-1],i=o[t],this._lineSegmentsIntersectsRange(e,i,t-2))return!0;return!1},newLatLngIntersects:function(t,e){return this._map?this.newPointIntersects(this._map.latLngToLayerPoint(t),e):!1},newPointIntersects:function(t,e){var i=this._originalPoints,o=i?i.length:0,a=i?i[o-1]:null,s=o-2;return this._tooFewPointsForIntersection(1)?!1:this._lineSegmentsIntersectsRange(a,t,s,e?1:0)},_tooFewPointsForIntersection:function(t){var e=this._originalPoints,i=e?e.length:0;return i+=t||0,!this._originalPoints||3>=i},_lineSegmentsIntersectsRange:function(t,e,i,o){var a,s,r=this._originalPoints;o=o||0;for(var n=i;n>o;n--)if(a=r[n-1],s=r[n],L.LineUtil.segmentsIntersect(t,e,a,s))return!0;return!1}}),L.Polygon.include({intersects:function(){var t,e,i,o,a,s=this._originalPoints;return this._tooFewPointsForIntersection()?!1:(t=L.Polyline.prototype.intersects.call(this))?!0:(e=s.length,i=s[0],o=s[e-1],a=e-2,this._lineSegmentsIntersectsRange(o,i,a,1))}}),L.Control.Draw=L.Control.extend({options:{position:"topleft",draw:{},edit:!1},initialize:function(t){if(L.version<"0.7")throw new Error("Leaflet.draw 0.2.3+ requires Leaflet 0.7.0+. Download latest from https://github.com/Leaflet/Leaflet/");L.Control.prototype.initialize.call(this,t);var e,i;this._toolbars={},L.DrawToolbar&&this.options.draw&&(i=new L.DrawToolbar(this.options.draw),e=L.stamp(i),this._toolbars[e]=i,this._toolbars[e].on("enable",this._toolbarEnabled,this)),L.EditToolbar&&this.options.edit&&(i=new L.EditToolbar(this.options.edit),e=L.stamp(i),this._toolbars[e]=i,this._toolbars[e].on("enable",this._toolbarEnabled,this))},onAdd:function(t){var e,i=L.DomUtil.create("div","leaflet-draw"),o=!1,a="leaflet-draw-toolbar-top";for(var s in this._toolbars)this._toolbars.hasOwnProperty(s)&&(e=this._toolbars[s].addToolbar(t),e&&(o||(L.DomUtil.hasClass(e,a)||L.DomUtil.addClass(e.childNodes[0],a),o=!0),i.appendChild(e)));return i},onRemove:function(){for(var t in this._toolbars)this._toolbars.hasOwnProperty(t)&&this._toolbars[t].removeToolbar()},setDrawingOptions:function(t){for(var e in this._toolbars)this._toolbars[e]instanceof L.DrawToolbar&&this._toolbars[e].setOptions(t)},_toolbarEnabled:function(t){var e=""+L.stamp(t.target);for(var i in this._toolbars)this._toolbars.hasOwnProperty(i)&&i!==e&&this._toolbars[i].disable()}}),L.Map.mergeOptions({drawControlTooltips:!0,drawControl:!1}),L.Map.addInitHook(function(){this.options.drawControl&&(this.drawControl=new L.Control.Draw,this.addControl(this.drawControl))}),L.Toolbar=L.Class.extend({includes:[L.Mixin.Events],initialize:function(t){L.setOptions(this,t),this._modes={},this._actionButtons=[],this._activeMode=null},enabled:function(){return null!==this._activeMode},disable:function(){this.enabled()&&this._activeMode.handler.disable()},addToolbar:function(t){var e,i=L.DomUtil.create("div","leaflet-draw-section"),o=0,a=this._toolbarClass||"",s=this.getModeHandlers(t);for(this._toolbarContainer=L.DomUtil.create("div","leaflet-draw-toolbar leaflet-bar"),this._map=t,e=0;e<s.length;e++)s[e].enabled&&this._initModeHandler(s[e].handler,this._toolbarContainer,o++,a,s[e].title);return o?(this._lastButtonIndex=--o,this._actionsContainer=L.DomUtil.create("ul","leaflet-draw-actions"),i.appendChild(this._toolbarContainer),i.appendChild(this._actionsContainer),i):void 0},removeToolbar:function(){for(var t in this._modes)this._modes.hasOwnProperty(t)&&(this._disposeButton(this._modes[t].button,this._modes[t].handler.enable,this._modes[t].handler),this._modes[t].handler.disable(),this._modes[t].handler.off("enabled",this._handlerActivated,this).off("disabled",this._handlerDeactivated,this));this._modes={};for(var e=0,i=this._actionButtons.length;i>e;e++)this._disposeButton(this._actionButtons[e].button,this._actionButtons[e].callback,this);this._actionButtons=[],this._actionsContainer=null},_initModeHandler:function(t,e,i,o,a){var s=t.type;this._modes[s]={},this._modes[s].handler=t,this._modes[s].button=this._createButton({title:a,className:o+"-"+s,container:e,callback:this._modes[s].handler.enable,context:this._modes[s].handler}),this._modes[s].buttonIndex=i,this._modes[s].handler.on("enabled",this._handlerActivated,this).on("disabled",this._handlerDeactivated,this)},_createButton:function(t){var e=L.DomUtil.create("a",t.className||"",t.container);return e.href="#",t.text&&(e.innerHTML=t.text),t.title&&(e.title=t.title),L.DomEvent.on(e,"click",L.DomEvent.stopPropagation).on(e,"mousedown",L.DomEvent.stopPropagation).on(e,"dblclick",L.DomEvent.stopPropagation).on(e,"click",L.DomEvent.preventDefault).on(e,"click",t.callback,t.context),e},_disposeButton:function(t,e){L.DomEvent.off(t,"click",L.DomEvent.stopPropagation).off(t,"mousedown",L.DomEvent.stopPropagation).off(t,"dblclick",L.DomEvent.stopPropagation).off(t,"click",L.DomEvent.preventDefault).off(t,"click",e)},_handlerActivated:function(t){this.disable(),this._activeMode=this._modes[t.handler],L.DomUtil.addClass(this._activeMode.button,"leaflet-draw-toolbar-button-enabled"),this._showActionsToolbar(),this.fire("enable")},_handlerDeactivated:function(){this._hideActionsToolbar(),L.DomUtil.removeClass(this._activeMode.button,"leaflet-draw-toolbar-button-enabled"),this._activeMode=null,this.fire("disable")},_createActions:function(t){var e,i,o,a,s=this._actionsContainer,r=this.getActions(t),n=r.length;for(i=0,o=this._actionButtons.length;o>i;i++)this._disposeButton(this._actionButtons[i].button,this._actionButtons[i].callback);for(this._actionButtons=[];s.firstChild;)s.removeChild(s.firstChild);for(var l=0;n>l;l++)"enabled"in r[l]&&!r[l].enabled||(e=L.DomUtil.create("li","",s),a=this._createButton({title:r[l].title,text:r[l].text,container:e,callback:r[l].callback,context:r[l].context}),this._actionButtons.push({button:a,callback:r[l].callback}))},_showActionsToolbar:function(){var t=this._activeMode.buttonIndex,e=this._lastButtonIndex,i=this._activeMode.button.offsetTop-1;this._createActions(this._activeMode.handler),this._actionsContainer.style.top=i+"px",0===t&&(L.DomUtil.addClass(this._toolbarContainer,"leaflet-draw-toolbar-notop"),L.DomUtil.addClass(this._actionsContainer,"leaflet-draw-actions-top")),t===e&&(L.DomUtil.addClass(this._toolbarContainer,"leaflet-draw-toolbar-nobottom"),L.DomUtil.addClass(this._actionsContainer,"leaflet-draw-actions-bottom")),this._actionsContainer.style.display="block"
 },_hideActionsToolbar:function(){this._actionsContainer.style.display="none",L.DomUtil.removeClass(this._toolbarContainer,"leaflet-draw-toolbar-notop"),L.DomUtil.removeClass(this._toolbarContainer,"leaflet-draw-toolbar-nobottom"),L.DomUtil.removeClass(this._actionsContainer,"leaflet-draw-actions-top"),L.DomUtil.removeClass(this._actionsContainer,"leaflet-draw-actions-bottom")}}),L.Tooltip=L.Class.extend({initialize:function(t){this._map=t,this._popupPane=t._panes.popupPane,this._container=t.options.drawControlTooltips?L.DomUtil.create("div","leaflet-draw-tooltip",this._popupPane):null,this._singleLineLabel=!1},dispose:function(){this._container&&(this._popupPane.removeChild(this._container),this._container=null)},updateContent:function(t){return this._container?(t.subtext=t.subtext||"",0!==t.subtext.length||this._singleLineLabel?t.subtext.length>0&&this._singleLineLabel&&(L.DomUtil.removeClass(this._container,"leaflet-draw-tooltip-single"),this._singleLineLabel=!1):(L.DomUtil.addClass(this._container,"leaflet-draw-tooltip-single"),this._singleLineLabel=!0),this._container.innerHTML=(t.subtext.length>0?'<span class="leaflet-draw-tooltip-subtext">'+t.subtext+"</span><br />":"")+"<span>"+t.text+"</span>",this):this},updatePosition:function(t){var e=this._map.latLngToLayerPoint(t),i=this._container;return this._container&&(i.style.visibility="inherit",L.DomUtil.setPosition(i,e)),this},showAsError:function(){return this._container&&L.DomUtil.addClass(this._container,"leaflet-error-draw-tooltip"),this},removeError:function(){return this._container&&L.DomUtil.removeClass(this._container,"leaflet-error-draw-tooltip"),this}}),L.DrawToolbar=L.Toolbar.extend({options:{polyline:{},polygon:{},rectangle:{},circle:{},marker:{}},initialize:function(t){for(var e in this.options)this.options.hasOwnProperty(e)&&t[e]&&(t[e]=L.extend({},this.options[e],t[e]));this._toolbarClass="leaflet-draw-draw",L.Toolbar.prototype.initialize.call(this,t)},getModeHandlers:function(t){return[{enabled:this.options.polyline,handler:new L.Draw.Polyline(t,this.options.polyline),title:L.drawLocal.draw.toolbar.buttons.polyline},{enabled:this.options.polygon,handler:new L.Draw.Polygon(t,this.options.polygon),title:L.drawLocal.draw.toolbar.buttons.polygon},{enabled:this.options.rectangle,handler:new L.Draw.Rectangle(t,this.options.rectangle),title:L.drawLocal.draw.toolbar.buttons.rectangle},{enabled:this.options.circle,handler:new L.Draw.Circle(t,this.options.circle),title:L.drawLocal.draw.toolbar.buttons.circle},{enabled:this.options.marker,handler:new L.Draw.Marker(t,this.options.marker),title:L.drawLocal.draw.toolbar.buttons.marker}]},getActions:function(t){return[{enabled:t.deleteLastVertex,title:L.drawLocal.draw.toolbar.undo.title,text:L.drawLocal.draw.toolbar.undo.text,callback:t.deleteLastVertex,context:t},{title:L.drawLocal.draw.toolbar.actions.title,text:L.drawLocal.draw.toolbar.actions.text,callback:this.disable,context:this}]},setOptions:function(t){L.setOptions(this,t);for(var e in this._modes)this._modes.hasOwnProperty(e)&&t.hasOwnProperty(e)&&this._modes[e].handler.setOptions(t[e])}}),L.EditToolbar=L.Toolbar.extend({options:{edit:{selectedPathOptions:{color:"#fe57a1",opacity:.6,dashArray:"10, 10",fill:!0,fillColor:"#fe57a1",fillOpacity:.1}},remove:{},featureGroup:null},initialize:function(t){t.edit&&("undefined"==typeof t.edit.selectedPathOptions&&(t.edit.selectedPathOptions=this.options.edit.selectedPathOptions),t.edit=L.extend({},this.options.edit,t.edit)),t.remove&&(t.remove=L.extend({},this.options.remove,t.remove)),this._toolbarClass="leaflet-draw-edit",L.Toolbar.prototype.initialize.call(this,t),this._selectedFeatureCount=0},getModeHandlers:function(t){var e=this.options.featureGroup;return[{enabled:this.options.edit,handler:new L.EditToolbar.Edit(t,{featureGroup:e,selectedPathOptions:this.options.edit.selectedPathOptions}),title:L.drawLocal.edit.toolbar.buttons.edit},{enabled:this.options.remove,handler:new L.EditToolbar.Delete(t,{featureGroup:e}),title:L.drawLocal.edit.toolbar.buttons.remove}]},getActions:function(){return[{title:L.drawLocal.edit.toolbar.actions.save.title,text:L.drawLocal.edit.toolbar.actions.save.text,callback:this._save,context:this},{title:L.drawLocal.edit.toolbar.actions.cancel.title,text:L.drawLocal.edit.toolbar.actions.cancel.text,callback:this.disable,context:this}]},addToolbar:function(t){var e=L.Toolbar.prototype.addToolbar.call(this,t);return this._checkDisabled(),this.options.featureGroup.on("layeradd layerremove",this._checkDisabled,this),e},removeToolbar:function(){this.options.featureGroup.off("layeradd layerremove",this._checkDisabled,this),L.Toolbar.prototype.removeToolbar.call(this)},disable:function(){this.enabled()&&(this._activeMode.handler.revertLayers(),L.Toolbar.prototype.disable.call(this))},_save:function(){this._activeMode.handler.save(),this._activeMode.handler.disable()},_checkDisabled:function(){var t,e=this.options.featureGroup,i=0!==e.getLayers().length;this.options.edit&&(t=this._modes[L.EditToolbar.Edit.TYPE].button,i?L.DomUtil.removeClass(t,"leaflet-disabled"):L.DomUtil.addClass(t,"leaflet-disabled"),t.setAttribute("title",i?L.drawLocal.edit.toolbar.buttons.edit:L.drawLocal.edit.toolbar.buttons.editDisabled)),this.options.remove&&(t=this._modes[L.EditToolbar.Delete.TYPE].button,i?L.DomUtil.removeClass(t,"leaflet-disabled"):L.DomUtil.addClass(t,"leaflet-disabled"),t.setAttribute("title",i?L.drawLocal.edit.toolbar.buttons.remove:L.drawLocal.edit.toolbar.buttons.removeDisabled))}}),L.EditToolbar.Edit=L.Handler.extend({statics:{TYPE:"edit"},includes:L.Mixin.Events,initialize:function(t,e){if(L.Handler.prototype.initialize.call(this,t),this._selectedPathOptions=e.selectedPathOptions,this._featureGroup=e.featureGroup,!(this._featureGroup instanceof L.FeatureGroup))throw new Error("options.featureGroup must be a L.FeatureGroup");this._uneditedLayerProps={},this.type=L.EditToolbar.Edit.TYPE},enable:function(){!this._enabled&&this._hasAvailableLayers()&&(this.fire("enabled",{handler:this.type}),this._map.fire("draw:editstart",{handler:this.type}),L.Handler.prototype.enable.call(this),this._featureGroup.on("layeradd",this._enableLayerEdit,this).on("layerremove",this._disableLayerEdit,this))},disable:function(){this._enabled&&(this._featureGroup.off("layeradd",this._enableLayerEdit,this).off("layerremove",this._disableLayerEdit,this),L.Handler.prototype.disable.call(this),this._map.fire("draw:editstop",{handler:this.type}),this.fire("disabled",{handler:this.type}))},addHooks:function(){var t=this._map;t&&(t.getContainer().focus(),this._featureGroup.eachLayer(this._enableLayerEdit,this),this._tooltip=new L.Tooltip(this._map),this._tooltip.updateContent({text:L.drawLocal.edit.handlers.edit.tooltip.text,subtext:L.drawLocal.edit.handlers.edit.tooltip.subtext}),this._map.on("mousemove",this._onMouseMove,this))},removeHooks:function(){this._map&&(this._featureGroup.eachLayer(this._disableLayerEdit,this),this._uneditedLayerProps={},this._tooltip.dispose(),this._tooltip=null,this._map.off("mousemove",this._onMouseMove,this))},revertLayers:function(){this._featureGroup.eachLayer(function(t){this._revertLayer(t)},this)},save:function(){var t=new L.LayerGroup;this._featureGroup.eachLayer(function(e){e.edited&&(t.addLayer(e),e.edited=!1)}),this._map.fire("draw:edited",{layers:t})},_backupLayer:function(t){var e=L.Util.stamp(t);this._uneditedLayerProps[e]||(t instanceof L.Polyline||t instanceof L.Polygon||t instanceof L.Rectangle?this._uneditedLayerProps[e]={latlngs:L.LatLngUtil.cloneLatLngs(t.getLatLngs())}:t instanceof L.Circle?this._uneditedLayerProps[e]={latlng:L.LatLngUtil.cloneLatLng(t.getLatLng()),radius:t.getRadius()}:t instanceof L.Marker&&(this._uneditedLayerProps[e]={latlng:L.LatLngUtil.cloneLatLng(t.getLatLng())}))},_revertLayer:function(t){var e=L.Util.stamp(t);t.edited=!1,this._uneditedLayerProps.hasOwnProperty(e)&&(t instanceof L.Polyline||t instanceof L.Polygon||t instanceof L.Rectangle?t.setLatLngs(this._uneditedLayerProps[e].latlngs):t instanceof L.Circle?(t.setLatLng(this._uneditedLayerProps[e].latlng),t.setRadius(this._uneditedLayerProps[e].radius)):t instanceof L.Marker&&t.setLatLng(this._uneditedLayerProps[e].latlng))},_toggleMarkerHighlight:function(t){if(t._icon){var e=t._icon;e.style.display="none",L.DomUtil.hasClass(e,"leaflet-edit-marker-selected")?(L.DomUtil.removeClass(e,"leaflet-edit-marker-selected"),this._offsetMarker(e,-4)):(L.DomUtil.addClass(e,"leaflet-edit-marker-selected"),this._offsetMarker(e,4)),e.style.display=""}},_offsetMarker:function(t,e){var i=parseInt(t.style.marginTop,10)-e,o=parseInt(t.style.marginLeft,10)-e;t.style.marginTop=i+"px",t.style.marginLeft=o+"px"},_enableLayerEdit:function(t){var e,i=t.layer||t.target||t,o=i instanceof L.Marker;(!o||i._icon)&&(this._backupLayer(i),this._selectedPathOptions&&(e=L.Util.extend({},this._selectedPathOptions),o?this._toggleMarkerHighlight(i):(i.options.previousOptions=L.Util.extend({dashArray:null},i.options),i instanceof L.Circle||i instanceof L.Polygon||i instanceof L.Rectangle||(e.fill=!1),i.setStyle(e))),o?(i.dragging.enable(),i.on("dragend",this._onMarkerDragEnd)):i.editing.enable())},_disableLayerEdit:function(t){var e=t.layer||t.target||t;e.edited=!1,this._selectedPathOptions&&(e instanceof L.Marker?this._toggleMarkerHighlight(e):(e.setStyle(e.options.previousOptions),delete e.options.previousOptions)),e instanceof L.Marker?(e.dragging.disable(),e.off("dragend",this._onMarkerDragEnd,this)):e.editing.disable()},_onMarkerDragEnd:function(t){var e=t.target;e.edited=!0},_onMouseMove:function(t){this._tooltip.updatePosition(t.latlng)},_hasAvailableLayers:function(){return 0!==this._featureGroup.getLayers().length}}),L.EditToolbar.Delete=L.Handler.extend({statics:{TYPE:"remove"},includes:L.Mixin.Events,initialize:function(t,e){if(L.Handler.prototype.initialize.call(this,t),L.Util.setOptions(this,e),this._deletableLayers=this.options.featureGroup,!(this._deletableLayers instanceof L.FeatureGroup))throw new Error("options.featureGroup must be a L.FeatureGroup");this.type=L.EditToolbar.Delete.TYPE},enable:function(){!this._enabled&&this._hasAvailableLayers()&&(this.fire("enabled",{handler:this.type}),this._map.fire("draw:deletestart",{handler:this.type}),L.Handler.prototype.enable.call(this),this._deletableLayers.on("layeradd",this._enableLayerDelete,this).on("layerremove",this._disableLayerDelete,this))},disable:function(){this._enabled&&(this._deletableLayers.off("layeradd",this._enableLayerDelete,this).off("layerremove",this._disableLayerDelete,this),L.Handler.prototype.disable.call(this),this._map.fire("draw:deletestop",{handler:this.type}),this.fire("disabled",{handler:this.type}))},addHooks:function(){var t=this._map;t&&(t.getContainer().focus(),this._deletableLayers.eachLayer(this._enableLayerDelete,this),this._deletedLayers=new L.layerGroup,this._tooltip=new L.Tooltip(this._map),this._tooltip.updateContent({text:L.drawLocal.edit.handlers.remove.tooltip.text}),this._map.on("mousemove",this._onMouseMove,this))},removeHooks:function(){this._map&&(this._deletableLayers.eachLayer(this._disableLayerDelete,this),this._deletedLayers=null,this._tooltip.dispose(),this._tooltip=null,this._map.off("mousemove",this._onMouseMove,this))},revertLayers:function(){this._deletedLayers.eachLayer(function(t){this._deletableLayers.addLayer(t)},this)},save:function(){this._map.fire("draw:deleted",{layers:this._deletedLayers})},_enableLayerDelete:function(t){var e=t.layer||t.target||t;e.on("click",this._removeLayer,this)},_disableLayerDelete:function(t){var e=t.layer||t.target||t;e.off("click",this._removeLayer,this),this._deletedLayers.removeLayer(e)},_removeLayer:function(t){var e=t.layer||t.target||t;this._deletableLayers.removeLayer(e),this._deletedLayers.addLayer(e)},_onMouseMove:function(t){this._tooltip.updatePosition(t.latlng)},_hasAvailableLayers:function(){return 0!==this._deletableLayers.getLayers().length}})}(window,document);
-},{}],7:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 function ToObject(val) {
@@ -714,7 +2025,7 @@ module.exports = Object.assign || function (target, source) {
 	return to;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /**
  * os-leaflet ; A [Leafletjs](http://leafletjs.com/) TileLayer to display Ordnance Survey
  *       data in your Leaflet map via the OS OpenSpace web map service.
@@ -948,7 +2259,7 @@ module.exports = Object.assign || function (target, source) {
   return L.tileLayer.OSOpenSpace;
 }));
 
-},{"leaflet":9,"proj4leaflet":75}],9:[function(require,module,exports){
+},{"leaflet":14,"proj4leaflet":80}],14:[function(require,module,exports){
 /*
  Leaflet, a JavaScript library for mobile-friendly interactive maps. http://leafletjs.com
  (c) 2010-2013, Vladimir Agafonkin
@@ -10129,7 +11440,7 @@ L.Map.include({
 
 
 }(window, document));
-},{}],10:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var mgrs = require('mgrs');
 
 function Point(x, y, z) {
@@ -10188,7 +11499,7 @@ Point.prototype.toMGRS = function(accuracy) {
   return mgrs.forward([this.x, this.y], accuracy);
 };
 module.exports = Point;
-},{"mgrs":74}],11:[function(require,module,exports){
+},{"mgrs":79}],16:[function(require,module,exports){
 var extend = require('./extend');
 var defs = require('./defs');
 var constants = {};
@@ -10331,7 +11642,7 @@ Projection.prototype = {
 };
 module.exports = Projection;
 
-},{"./constants/Datum":33,"./constants/Ellipsoid":34,"./constants/grids":36,"./datum":38,"./defs":40,"./extend":41,"./projString":44,"./projections/index":53,"./wkt":73}],12:[function(require,module,exports){
+},{"./constants/Datum":38,"./constants/Ellipsoid":39,"./constants/grids":41,"./datum":43,"./defs":45,"./extend":46,"./projString":49,"./projections/index":58,"./wkt":78}],17:[function(require,module,exports){
 module.exports = function(crs, denorm, point) {
   var xin = point.x,
     yin = point.y,
@@ -10384,49 +11695,49 @@ module.exports = function(crs, denorm, point) {
   return point;
 };
 
-},{}],13:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 var sign = require('./sign');
 
 module.exports = function(x) {
   return (Math.abs(x) < HALF_PI) ? x : (x - (sign(x) * Math.PI));
 };
-},{"./sign":30}],14:[function(require,module,exports){
+},{"./sign":35}],19:[function(require,module,exports){
 var TWO_PI = Math.PI * 2;
 var sign = require('./sign');
 
 module.exports = function(x) {
   return (Math.abs(x) < Math.PI) ? x : (x - (sign(x) * TWO_PI));
 };
-},{"./sign":30}],15:[function(require,module,exports){
+},{"./sign":35}],20:[function(require,module,exports){
 module.exports = function(x) {
   if (Math.abs(x) > 1) {
     x = (x > 1) ? 1 : -1;
   }
   return Math.asin(x);
 };
-},{}],16:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 module.exports = function(x) {
   return (1 - 0.25 * x * (1 + x / 16 * (3 + 1.25 * x)));
 };
-},{}],17:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 module.exports = function(x) {
   return (0.375 * x * (1 + 0.25 * x * (1 + 0.46875 * x)));
 };
-},{}],18:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 module.exports = function(x) {
   return (0.05859375 * x * x * (1 + 0.75 * x));
 };
-},{}],19:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports = function(x) {
   return (x * x * x * (35 / 3072));
 };
-},{}],20:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 module.exports = function(a, e, sinphi) {
   var temp = e * sinphi;
   return a / Math.sqrt(1 - temp * temp);
 };
-},{}],21:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function(ml, e0, e1, e2, e3) {
   var phi;
   var dphi;
@@ -10443,7 +11754,7 @@ module.exports = function(ml, e0, e1, e2, e3) {
   //..reportError("IMLFN-CONV:Latitude failed to converge after 15 iterations");
   return NaN;
 };
-},{}],22:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 
 module.exports = function(eccent, q) {
@@ -10476,16 +11787,16 @@ module.exports = function(eccent, q) {
   //console.log("IQSFN-CONV:Latitude failed to converge after 30 iterations");
   return NaN;
 };
-},{}],23:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = function(e0, e1, e2, e3, phi) {
   return (e0 * phi - e1 * Math.sin(2 * phi) + e2 * Math.sin(4 * phi) - e3 * Math.sin(6 * phi));
 };
-},{}],24:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 module.exports = function(eccent, sinphi, cosphi) {
   var con = eccent * sinphi;
   return cosphi / (Math.sqrt(1 - con * con));
 };
-},{}],25:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 module.exports = function(eccent, ts) {
   var eccnth = 0.5 * eccent;
@@ -10502,7 +11813,7 @@ module.exports = function(eccent, ts) {
   //console.log("phi2z has NoConvergence");
   return -9999;
 };
-},{}],26:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var C00 = 1;
 var C02 = 0.25;
 var C04 = 0.046875;
@@ -10527,7 +11838,7 @@ module.exports = function(es) {
   en[4] = t * es * C88;
   return en;
 };
-},{}],27:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var pj_mlfn = require("./pj_mlfn");
 var EPSLN = 1.0e-10;
 var MAX_ITER = 20;
@@ -10548,13 +11859,13 @@ module.exports = function(arg, es, en) {
   //..reportError("cass:pj_inv_mlfn: Convergence error");
   return phi;
 };
-},{"./pj_mlfn":28}],28:[function(require,module,exports){
+},{"./pj_mlfn":33}],33:[function(require,module,exports){
 module.exports = function(phi, sphi, cphi, en) {
   cphi *= sphi;
   sphi *= sphi;
   return (en[0] * phi - cphi * (en[1] + sphi * (en[2] + sphi * (en[3] + sphi * en[4]))));
 };
-},{}],29:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = function(eccent, sinphi) {
   var con;
   if (eccent > 1.0e-7) {
@@ -10565,15 +11876,15 @@ module.exports = function(eccent, sinphi) {
     return (2 * sinphi);
   }
 };
-},{}],30:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports = function(x) {
   return x<0 ? -1 : 1;
 };
-},{}],31:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = function(esinp, exp) {
   return (Math.pow((1 - esinp) / (1 + esinp), exp));
 };
-},{}],32:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 
 module.exports = function(eccent, phi, sinphi) {
@@ -10582,7 +11893,7 @@ module.exports = function(eccent, phi, sinphi) {
   con = Math.pow(((1 - con) / (1 + con)), com);
   return (Math.tan(0.5 * (HALF_PI - phi)) / con);
 };
-},{}],33:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 exports.wgs84 = {
   towgs84: "0,0,0",
   ellipse: "WGS84",
@@ -10658,7 +11969,7 @@ exports.gunung_segara = {
   ellipse: 'bessel',
   datumName: 'Gunung Segara Jakarta'
 };
-},{}],34:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 exports.MERIT = {
   a: 6378137.0,
   rf: 298.257,
@@ -10874,7 +12185,7 @@ exports.sphere = {
   b: 6370997.0,
   ellipseName: "Normal Sphere (r=6370997)"
 };
-},{}],35:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 exports.greenwich = 0.0; //"0dE",
 exports.lisbon = -9.131906111111; //"9d07'54.862\"W",
 exports.paris = 2.337229166667; //"2d20'14.025\"E",
@@ -10888,7 +12199,7 @@ exports.brussels = 4.367975; //"4d22'4.71\"E",
 exports.stockholm = 18.058277777778; //"18d3'29.8\"E",
 exports.athens = 23.7163375; //"23d42'58.815\"E",
 exports.oslo = 10.722916666667; //"10d43'22.5\"E"
-},{}],36:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 // Based on . CTABLE  structure :
   // FIXME: better to have array instead of object holding longitudes, latitudes members
   //        In the former case, one has to document index 0 is longitude and
@@ -10912,7 +12223,7 @@ exports.null = { // name of grid's file
     [0.0, 0.0] // }
   ]
 };
-},{}],37:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 var point = require('./Point');
 var proj = require('./Proj');
 var transform = require('./transform');
@@ -10978,7 +12289,7 @@ function proj4(fromProj, toProj, coord) {
   }
 }
 module.exports = proj4;
-},{"./Point":10,"./Proj":11,"./transform":71}],38:[function(require,module,exports){
+},{"./Point":15,"./Proj":16,"./transform":76}],43:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 var PJD_3PARAM = 1;
 var PJD_7PARAM = 2;
@@ -11384,7 +12695,7 @@ datum.prototype = {
 */
 module.exports = datum;
 
-},{}],39:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 var PJD_3PARAM = 1;
 var PJD_7PARAM = 2;
 var PJD_GRIDSHIFT = 3;
@@ -11485,7 +12796,7 @@ module.exports = function(source, dest, point) {
 };
 
 
-},{}],40:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var globals = require('./global');
 var parseProj = require('./projString');
 var wkt = require('./wkt');
@@ -11535,7 +12846,7 @@ function defs(name) {
 globals(defs);
 module.exports = defs;
 
-},{"./global":42,"./projString":44,"./wkt":73}],41:[function(require,module,exports){
+},{"./global":47,"./projString":49,"./wkt":78}],46:[function(require,module,exports){
 module.exports = function(destination, source) {
   destination = destination || {};
   var value, property;
@@ -11551,7 +12862,7 @@ module.exports = function(destination, source) {
   return destination;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports = function(defs) {
   defs('WGS84', "+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees");
   defs('EPSG:4326', "+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees");
@@ -11564,7 +12875,7 @@ module.exports = function(defs) {
   defs['EPSG:102113'] = defs['EPSG:3857'];
 };
 
-},{}],43:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 var proj4 = require('./core');
 proj4.defaultDatum = 'WGS84'; //default datum
 proj4.Proj = require('./Proj');
@@ -11575,7 +12886,7 @@ proj4.transform = require('./transform');
 proj4.mgrs = require('mgrs');
 proj4.version = require('./version');
 module.exports = proj4;
-},{"./Point":10,"./Proj":11,"./core":37,"./defs":40,"./transform":71,"./version":72,"mgrs":74}],44:[function(require,module,exports){
+},{"./Point":15,"./Proj":16,"./core":42,"./defs":45,"./transform":76,"./version":77,"mgrs":79}],49:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var PrimeMeridian = require('./constants/PrimeMeridian');
 module.exports = function(defData) {
@@ -11693,7 +13004,7 @@ module.exports = function(defData) {
   return self;
 };
 
-},{"./constants/PrimeMeridian":35}],45:[function(require,module,exports){
+},{"./constants/PrimeMeridian":40}],50:[function(require,module,exports){
 var EPSLN = 1.0e-10;
 var msfnz = require('../common/msfnz');
 var qsfnz = require('../common/qsfnz');
@@ -11816,7 +13127,7 @@ exports.phi1z = function(eccent, qs) {
 };
 exports.names = ["Albers_Conic_Equal_Area", "Albers", "aea"];
 
-},{"../common/adjust_lon":14,"../common/asinz":15,"../common/msfnz":24,"../common/qsfnz":29}],46:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/asinz":20,"../common/msfnz":29,"../common/qsfnz":34}],51:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
@@ -12015,7 +13326,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["Azimuthal_Equidistant", "aeqd"];
 
-},{"../common/adjust_lon":14,"../common/asinz":15,"../common/e0fn":16,"../common/e1fn":17,"../common/e2fn":18,"../common/e3fn":19,"../common/gN":20,"../common/imlfn":21,"../common/mlfn":23}],47:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/asinz":20,"../common/e0fn":21,"../common/e1fn":22,"../common/e2fn":23,"../common/e3fn":24,"../common/gN":25,"../common/imlfn":26,"../common/mlfn":28}],52:[function(require,module,exports){
 var mlfn = require('../common/mlfn');
 var e0fn = require('../common/e0fn');
 var e1fn = require('../common/e1fn');
@@ -12119,7 +13430,7 @@ exports.inverse = function(p) {
 
 };
 exports.names = ["Cassini", "Cassini_Soldner", "cass"];
-},{"../common/adjust_lat":13,"../common/adjust_lon":14,"../common/e0fn":16,"../common/e1fn":17,"../common/e2fn":18,"../common/e3fn":19,"../common/gN":20,"../common/imlfn":21,"../common/mlfn":23}],48:[function(require,module,exports){
+},{"../common/adjust_lat":18,"../common/adjust_lon":19,"../common/e0fn":21,"../common/e1fn":22,"../common/e2fn":23,"../common/e3fn":24,"../common/gN":25,"../common/imlfn":26,"../common/mlfn":28}],53:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 var qsfnz = require('../common/qsfnz');
 var msfnz = require('../common/msfnz');
@@ -12184,7 +13495,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["cea"];
 
-},{"../common/adjust_lon":14,"../common/iqsfnz":22,"../common/msfnz":24,"../common/qsfnz":29}],49:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/iqsfnz":27,"../common/msfnz":29,"../common/qsfnz":34}],54:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 var adjust_lat = require('../common/adjust_lat');
 exports.init = function() {
@@ -12227,7 +13538,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["Equirectangular", "Equidistant_Cylindrical", "eqc"];
 
-},{"../common/adjust_lat":13,"../common/adjust_lon":14}],50:[function(require,module,exports){
+},{"../common/adjust_lat":18,"../common/adjust_lon":19}],55:[function(require,module,exports){
 var e0fn = require('../common/e0fn');
 var e1fn = require('../common/e1fn');
 var e2fn = require('../common/e2fn');
@@ -12339,7 +13650,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["Equidistant_Conic", "eqdc"];
 
-},{"../common/adjust_lat":13,"../common/adjust_lon":14,"../common/e0fn":16,"../common/e1fn":17,"../common/e2fn":18,"../common/e3fn":19,"../common/imlfn":21,"../common/mlfn":23,"../common/msfnz":24}],51:[function(require,module,exports){
+},{"../common/adjust_lat":18,"../common/adjust_lon":19,"../common/e0fn":21,"../common/e1fn":22,"../common/e2fn":23,"../common/e3fn":24,"../common/imlfn":26,"../common/mlfn":28,"../common/msfnz":29}],56:[function(require,module,exports){
 var FORTPI = Math.PI/4;
 var srat = require('../common/srat');
 var HALF_PI = Math.PI/2;
@@ -12386,7 +13697,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["gauss"];
 
-},{"../common/srat":31}],52:[function(require,module,exports){
+},{"../common/srat":36}],57:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 var EPSLN = 1.0e-10;
 var asinz = require('../common/asinz');
@@ -12487,7 +13798,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["gnom"];
 
-},{"../common/adjust_lon":14,"../common/asinz":15}],53:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/asinz":20}],58:[function(require,module,exports){
 var projs = [
   require('./tmerc'),
   require('./utm'),
@@ -12545,7 +13856,7 @@ exports.start = function() {
   projs.forEach(add);
 };
 
-},{"./aea":45,"./aeqd":46,"./cass":47,"./cea":48,"./eqc":49,"./eqdc":50,"./gnom":52,"./krovak":54,"./laea":55,"./lcc":56,"./longlat":57,"./merc":58,"./mill":59,"./moll":60,"./nzmg":61,"./omerc":62,"./poly":63,"./sinu":64,"./somerc":65,"./stere":66,"./sterea":67,"./tmerc":68,"./utm":69,"./vandg":70}],54:[function(require,module,exports){
+},{"./aea":50,"./aeqd":51,"./cass":52,"./cea":53,"./eqc":54,"./eqdc":55,"./gnom":57,"./krovak":59,"./laea":60,"./lcc":61,"./longlat":62,"./merc":63,"./mill":64,"./moll":65,"./nzmg":66,"./omerc":67,"./poly":68,"./sinu":69,"./somerc":70,"./stere":71,"./sterea":72,"./tmerc":73,"./utm":74,"./vandg":75}],59:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 exports.init = function() {
   this.a = 6377397.155;
@@ -12645,7 +13956,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["Krovak", "krovak"];
 
-},{"../common/adjust_lon":14}],55:[function(require,module,exports){
+},{"../common/adjust_lon":19}],60:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 var FORTPI = Math.PI/4;
 var EPSLN = 1.0e-10;
@@ -12935,7 +14246,7 @@ exports.authlat = function(beta, APA) {
 };
 exports.names = ["Lambert Azimuthal Equal Area", "Lambert_Azimuthal_Equal_Area", "laea"];
 
-},{"../common/adjust_lon":14,"../common/qsfnz":29}],56:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/qsfnz":34}],61:[function(require,module,exports){
 var EPSLN = 1.0e-10;
 var msfnz = require('../common/msfnz');
 var tsfnz = require('../common/tsfnz');
@@ -13071,7 +14382,7 @@ exports.inverse = function(p) {
 
 exports.names = ["Lambert Tangential Conformal Conic Projection", "Lambert_Conformal_Conic", "Lambert_Conformal_Conic_2SP", "lcc"];
 
-},{"../common/adjust_lon":14,"../common/msfnz":24,"../common/phi2z":25,"../common/sign":30,"../common/tsfnz":32}],57:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/msfnz":29,"../common/phi2z":30,"../common/sign":35,"../common/tsfnz":37}],62:[function(require,module,exports){
 exports.init = function() {
   //no-op for longlat
 };
@@ -13083,7 +14394,7 @@ exports.forward = identity;
 exports.inverse = identity;
 exports.names = ["longlat", "identity"];
 
-},{}],58:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 var msfnz = require('../common/msfnz');
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
@@ -13176,7 +14487,7 @@ exports.inverse = function(p) {
 
 exports.names = ["Mercator", "Popular Visualisation Pseudo Mercator", "Mercator_1SP", "Mercator_Auxiliary_Sphere", "merc"];
 
-},{"../common/adjust_lon":14,"../common/msfnz":24,"../common/phi2z":25,"../common/tsfnz":32}],59:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/msfnz":29,"../common/phi2z":30,"../common/tsfnz":37}],64:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 /*
   reference
@@ -13223,7 +14534,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["Miller_Cylindrical", "mill"];
 
-},{"../common/adjust_lon":14}],60:[function(require,module,exports){
+},{"../common/adjust_lon":19}],65:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 var EPSLN = 1.0e-10;
 exports.init = function() {};
@@ -13302,7 +14613,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["Mollweide", "moll"];
 
-},{"../common/adjust_lon":14}],61:[function(require,module,exports){
+},{"../common/adjust_lon":19}],66:[function(require,module,exports){
 var SEC_TO_RAD = 4.84813681109535993589914102357e-6;
 /*
   reference
@@ -13522,7 +14833,7 @@ exports.inverse = function(p) {
   return p;
 };
 exports.names = ["New_Zealand_Map_Grid", "nzmg"];
-},{}],62:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var tsfnz = require('../common/tsfnz');
 var adjust_lon = require('../common/adjust_lon');
 var phi2z = require('../common/phi2z');
@@ -13691,7 +15002,7 @@ exports.inverse = function(p) {
 };
 
 exports.names = ["Hotine_Oblique_Mercator", "Hotine Oblique Mercator", "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", "Hotine_Oblique_Mercator_Azimuth_Center", "omerc"];
-},{"../common/adjust_lon":14,"../common/phi2z":25,"../common/tsfnz":32}],63:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/phi2z":30,"../common/tsfnz":37}],68:[function(require,module,exports){
 var e0fn = require('../common/e0fn');
 var e1fn = require('../common/e1fn');
 var e2fn = require('../common/e2fn');
@@ -13820,7 +15131,7 @@ exports.inverse = function(p) {
   return p;
 };
 exports.names = ["Polyconic", "poly"];
-},{"../common/adjust_lat":13,"../common/adjust_lon":14,"../common/e0fn":16,"../common/e1fn":17,"../common/e2fn":18,"../common/e3fn":19,"../common/gN":20,"../common/mlfn":23}],64:[function(require,module,exports){
+},{"../common/adjust_lat":18,"../common/adjust_lon":19,"../common/e0fn":21,"../common/e1fn":22,"../common/e2fn":23,"../common/e3fn":24,"../common/gN":25,"../common/mlfn":28}],69:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 var adjust_lat = require('../common/adjust_lat');
 var pj_enfn = require('../common/pj_enfn');
@@ -13927,7 +15238,7 @@ exports.inverse = function(p) {
   return p;
 };
 exports.names = ["Sinusoidal", "sinu"];
-},{"../common/adjust_lat":13,"../common/adjust_lon":14,"../common/asinz":15,"../common/pj_enfn":26,"../common/pj_inv_mlfn":27,"../common/pj_mlfn":28}],65:[function(require,module,exports){
+},{"../common/adjust_lat":18,"../common/adjust_lon":19,"../common/asinz":20,"../common/pj_enfn":31,"../common/pj_inv_mlfn":32,"../common/pj_mlfn":33}],70:[function(require,module,exports){
 /*
   references:
     Formules et constantes pour le Calcul pour la
@@ -14009,7 +15320,7 @@ exports.inverse = function(p) {
 
 exports.names = ["somerc"];
 
-},{}],66:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
 var sign = require('../common/sign');
@@ -14176,7 +15487,7 @@ exports.inverse = function(p) {
 
 };
 exports.names = ["stere"];
-},{"../common/adjust_lon":14,"../common/msfnz":24,"../common/phi2z":25,"../common/sign":30,"../common/tsfnz":32}],67:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/msfnz":29,"../common/phi2z":30,"../common/sign":35,"../common/tsfnz":37}],72:[function(require,module,exports){
 var gauss = require('./gauss');
 var adjust_lon = require('../common/adjust_lon');
 exports.init = function() {
@@ -14235,7 +15546,7 @@ exports.inverse = function(p) {
 
 exports.names = ["Stereographic_North_Pole", "Oblique_Stereographic", "Polar_Stereographic", "sterea","Oblique Stereographic Alternative"];
 
-},{"../common/adjust_lon":14,"./gauss":51}],68:[function(require,module,exports){
+},{"../common/adjust_lon":19,"./gauss":56}],73:[function(require,module,exports){
 var e0fn = require('../common/e0fn');
 var e1fn = require('../common/e1fn');
 var e2fn = require('../common/e2fn');
@@ -14372,7 +15683,7 @@ exports.inverse = function(p) {
 };
 exports.names = ["Transverse_Mercator", "Transverse Mercator", "tmerc"];
 
-},{"../common/adjust_lon":14,"../common/asinz":15,"../common/e0fn":16,"../common/e1fn":17,"../common/e2fn":18,"../common/e3fn":19,"../common/mlfn":23,"../common/sign":30}],69:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/asinz":20,"../common/e0fn":21,"../common/e1fn":22,"../common/e2fn":23,"../common/e3fn":24,"../common/mlfn":28,"../common/sign":35}],74:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var tmerc = require('./tmerc');
 exports.dependsOn = 'tmerc';
@@ -14392,7 +15703,7 @@ exports.init = function() {
 };
 exports.names = ["Universal Transverse Mercator System", "utm"];
 
-},{"./tmerc":68}],70:[function(require,module,exports){
+},{"./tmerc":73}],75:[function(require,module,exports){
 var adjust_lon = require('../common/adjust_lon');
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
@@ -14513,7 +15824,7 @@ exports.inverse = function(p) {
   return p;
 };
 exports.names = ["Van_der_Grinten_I", "VanDerGrinten", "vandg"];
-},{"../common/adjust_lon":14,"../common/asinz":15}],71:[function(require,module,exports){
+},{"../common/adjust_lon":19,"../common/asinz":20}],76:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var R2D = 57.29577951308232088;
 var PJD_3PARAM = 1;
@@ -14583,9 +15894,9 @@ module.exports = function transform(source, dest, point) {
 
   return point;
 };
-},{"./Proj":11,"./adjust_axis":12,"./datum_transform":39}],72:[function(require,module,exports){
+},{"./Proj":16,"./adjust_axis":17,"./datum_transform":44}],77:[function(require,module,exports){
 module.exports = '2.0.3';
-},{}],73:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var extend = require('./extend');
 
@@ -14793,7 +16104,7 @@ module.exports = function(wkt, self) {
   return extend(self, obj.output);
 };
 
-},{"./extend":41}],74:[function(require,module,exports){
+},{"./extend":46}],79:[function(require,module,exports){
 
 
 
@@ -15530,7 +16841,7 @@ function getMinNorthing(zoneLetter) {
 
 }
 
-},{}],75:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 (function (factory) {
 	var L, proj4;
 	if (typeof define === 'function' && define.amd) {
@@ -15922,7 +17233,7 @@ function getMinNorthing(zoneLetter) {
 	return L.Proj;
 }));
 
-},{"leaflet":9,"proj4":43}],76:[function(require,module,exports){
+},{"leaflet":14,"proj4":48}],81:[function(require,module,exports){
 var AppDispatcher = require('../dispatcher/AppDispatcher'),
   AppConstants = require('../constants/AppConstants');
 
@@ -15976,7 +17287,7 @@ var AppActions = {
 
 module.exports = AppActions;
 
-},{"../constants/AppConstants":85,"../dispatcher/AppDispatcher":86}],77:[function(require,module,exports){
+},{"../constants/AppConstants":90,"../dispatcher/AppDispatcher":91}],82:[function(require,module,exports){
 var OSMap = require('./OSMap.jsx'),
   MenuPanel = require('./MenuPanel.jsx'),
   ManualEditPanel = require('./ManualEditPanel.jsx'),
@@ -16034,7 +17345,7 @@ var App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"../constants/AppConstants":85,"../stores/GeoStore":90,"./ManualEditPanel.jsx":81,"./MenuPanel.jsx":82,"./OSMap.jsx":83}],78:[function(require,module,exports){
+},{"../constants/AppConstants":90,"../stores/GeoStore":95,"./ManualEditPanel.jsx":86,"./MenuPanel.jsx":87,"./OSMap.jsx":88}],83:[function(require,module,exports){
 var FeatureRow = require('./FeatureRow.jsx'),
   FeatureParser = require('../geo/FeatureParser');
 
@@ -16064,7 +17375,7 @@ var FeatureList = React.createClass({displayName: "FeatureList",
 
 module.exports = FeatureList;
 
-},{"../geo/FeatureParser":87,"./FeatureRow.jsx":79}],79:[function(require,module,exports){
+},{"../geo/FeatureParser":92,"./FeatureRow.jsx":84}],84:[function(require,module,exports){
 
 // todo improve presentation
 function presentFeature(data) {
@@ -16098,12 +17409,36 @@ var FeatureRow = React.createClass({displayName: "FeatureRow",
 
 module.exports = FeatureRow
 
-},{}],80:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 var AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants');
+  AppConstants = require('../constants/AppConstants'),
+  GeoJsonHint = require('geojsonhint');
 
 function presentGeoJson(data) {
-  return JSON.stringify(data);
+  return JSON.stringify(data, null, 2);
+}
+
+function validateInput(data, successCallback, errorCallback) {
+  var errors = GeoJsonHint.hint(data);
+  if (errors instanceof Error) {
+    errorCallback(errors);
+  } else if (errors.length) {
+    errorCallback(errors);
+  }else{
+    try {
+      successCallback(
+        JSON.parse(data)
+      );
+    } catch(e) {
+      validate(e, successCallback, errorCallback);
+    }
+  }
+}
+
+function success(data) {
+  AppActions.create(
+    data
+  );
 }
 
 var JsonEditInput = React.createClass({displayName: "JsonEditInput",
@@ -16111,16 +17446,17 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
     geoJson: React.PropTypes.object.isRequired
   },
 
-  getDefaultProps: function() {
+  getInitialState: function() {
     return {
-      isEditing: false
+      focus: false,
+      errors: null
     };
   },
 
-  getInitialState: function() {
-    return {
-      focus: false
-    };
+  componentWillReceiveProps: function(nextProps) {
+    this.setState({
+      errors: null
+    });
   },
 
   onInputFocus: function(e) {
@@ -16133,20 +17469,35 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
 
   onInputChange: function(e) {
     if (e.currentTarget.value.trim()) {
-      var data = JSON.parse(e.currentTarget.value);
-
-      AppActions.create(
-        data
-      );
+      validateInput(e.currentTarget.value, success, this.onError);
     }
+  },
+
+  onError: function(errors) {
+    this.setState({errors: errors})
   },
 
   render: function() {
     var classes = 'materialize-textarea',
-      editableGeoJson = presentGeoJson(this.props.geoJson);
+      errorClasses = 'help',
+      editableGeoJson,
+      errTxt = '';
+
+    // todo urggh; there's some junk here
+
+    if(!this.state.errors) {
+      // we dont want to do anything with this in error state, so dont force
+      // dom update of the json input
+      editableGeoJson = presentGeoJson(this.props.geoJson)
+    }
 
     if(this.state.focus) {
       classes = classes + ' selected-input';
+    }
+
+    if(this.state.errors) {
+      errTxt = JSON.stringify(this.state.errors)
+      errorClasses = errorClasses + ' has-error'
     }
 
     return (
@@ -16155,21 +17506,20 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
           rows: "20", 
           cols: "10", 
           className: classes, 
-          placeholder: "{}", 
           onFocus: this.onInputFocus, 
           onBlur: this.onInputBlur, 
           onChange: this.onInputChange, 
           value: editableGeoJson}
-        )
+        ), 
+        React.createElement("div", {ref: "errs", className: errorClasses}, errTxt)
       )
     );
   }
-
 });
 
 module.exports = JsonEditInput;
 
-},{"../actions/AppActions":76,"../constants/AppConstants":85}],81:[function(require,module,exports){
+},{"../actions/AppActions":81,"../constants/AppConstants":90,"geojsonhint":8}],86:[function(require,module,exports){
 var JsonEditInput = require('./JsonEditInput.jsx'),
   FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),
@@ -16178,7 +17528,6 @@ var JsonEditInput = require('./JsonEditInput.jsx'),
 var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
   getDefaultProps: function() {
     return {
-      isEditing: false,
       inputReferenceSystem: AppConstants.CRS_LONLAT
     };
   },
@@ -16228,7 +17577,7 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
 
 module.exports = ManualEditPanel;
 
-},{"../actions/AppActions":76,"../constants/AppConstants":85,"./FeatureList.jsx":78,"./JsonEditInput.jsx":80}],82:[function(require,module,exports){
+},{"../actions/AppActions":81,"../constants/AppConstants":90,"./FeatureList.jsx":83,"./JsonEditInput.jsx":85}],87:[function(require,module,exports){
 var TabSwitcher = require("./TabSwitcher.jsx"),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants');
@@ -16287,7 +17636,7 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
 
 module.exports = MenuPanel;
 
-},{"../actions/AppActions":76,"../constants/AppConstants":85,"./TabSwitcher.jsx":84}],83:[function(require,module,exports){
+},{"../actions/AppActions":81,"../constants/AppConstants":90,"./TabSwitcher.jsx":89}],88:[function(require,module,exports){
 var OSOpenSpace = require('os-leaflet'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),
@@ -16430,7 +17779,7 @@ var OSMap = React.createClass({displayName: "OSMap",
 
 module.exports = OSMap;
 
-},{"../actions/AppActions":76,"../constants/AppConstants":85,"../geo/Utils":89,"leaflet-draw":6,"os-leaflet":8}],84:[function(require,module,exports){
+},{"../actions/AppActions":81,"../constants/AppConstants":90,"../geo/Utils":94,"leaflet-draw":11,"os-leaflet":13}],89:[function(require,module,exports){
 var EDIT_TAB = 0,
   FEATURE_LIST_TAB = 1;
 
@@ -16459,7 +17808,7 @@ var TabSwitcher = React.createClass({displayName: "TabSwitcher",
 
 module.exports = TabSwitcher;
 
-},{}],85:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var keyMirror = require('keymirror');
 
 module.exports = keyMirror({
@@ -16471,12 +17820,12 @@ module.exports = keyMirror({
   CRS_BNG: null
 });
 
-},{"keymirror":5}],86:[function(require,module,exports){
+},{"keymirror":10}],91:[function(require,module,exports){
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
 
-},{"flux":2}],87:[function(require,module,exports){
+},{"flux":5}],92:[function(require,module,exports){
 
 function parseFeature(feature) {
   return {
@@ -16509,7 +17858,7 @@ module.exports = {
   features: parseGeoJson
 }
 
-},{}],88:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 var gbifygeoson = require("../../../gbgeojsonify");
 
 module.exports = {
@@ -16522,7 +17871,7 @@ module.exports = {
   }
 }
 
-},{"../../../gbgeojsonify":91}],89:[function(require,module,exports){
+},{"../../../gbgeojsonify":96}],94:[function(require,module,exports){
 module.exports = {
   featureCollection: function (features) {
     return {
@@ -16532,7 +17881,7 @@ module.exports = {
   }
 }
 
-},{}],90:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 var AppDispatcher = require('../dispatcher/AppDispatcher'),
   EventEmitter = require('events').EventEmitter,
   AppConstants = require('../constants/AppConstants'),
@@ -16705,7 +18054,7 @@ setInputCrs(initialCrs);
 
 module.exports = AppStore;
 
-},{"../constants/AppConstants":85,"../dispatcher/AppDispatcher":86,"../geo/ReprojectGeoJson":88,"../geo/Utils":89,"events":1,"object-assign":7}],91:[function(require,module,exports){
+},{"../constants/AppConstants":90,"../dispatcher/AppDispatcher":91,"../geo/ReprojectGeoJson":93,"../geo/Utils":94,"events":2,"object-assign":12}],96:[function(require,module,exports){
 (function (root, factory) {
   // UMD for Node, AMD or browser globals.
   if (typeof define === 'function' && define.amd) {
@@ -16795,7 +18144,7 @@ module.exports = AppStore;
   };
 }));
 
-},{"proj4":128}],92:[function(require,module,exports){
+},{"proj4":133}],97:[function(require,module,exports){
 var mgrs = require('mgrs');
 
 function Point(x, y, z) {
@@ -16831,7 +18180,7 @@ Point.prototype.toMGRS = function(accuracy) {
   return mgrs.forward([this.x, this.y], accuracy);
 };
 module.exports = Point;
-},{"mgrs":159}],93:[function(require,module,exports){
+},{"mgrs":164}],98:[function(require,module,exports){
 var parseCode = require("./parseCode");
 var extend = require('./extend');
 var projections = require('./projections');
@@ -16866,11 +18215,11 @@ Projection.projections = projections;
 Projection.projections.start();
 module.exports = Projection;
 
-},{"./deriveConstants":124,"./extend":125,"./parseCode":129,"./projections":131}],94:[function(require,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],95:[function(require,module,exports){
-arguments[4][13][0].apply(exports,arguments)
-},{"./sign":112,"dup":13}],96:[function(require,module,exports){
+},{"./deriveConstants":129,"./extend":130,"./parseCode":134,"./projections":136}],99:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"dup":17}],100:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"./sign":117,"dup":18}],101:[function(require,module,exports){
 var TWO_PI = Math.PI * 2;
 // SPI is slightly greater than Math.PI, so values that exceed the -180..180
 // degree range by a tiny amount don't get wrapped. This prevents points that
@@ -16882,17 +18231,7 @@ var sign = require('./sign');
 module.exports = function(x) {
   return (Math.abs(x) <= SPI) ? x : (x - (sign(x) * TWO_PI));
 };
-},{"./sign":112}],97:[function(require,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],98:[function(require,module,exports){
-arguments[4][16][0].apply(exports,arguments)
-},{"dup":16}],99:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],100:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],101:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],102:[function(require,module,exports){
+},{"./sign":117}],102:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
 },{"dup":20}],103:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
@@ -16908,7 +18247,7 @@ arguments[4][25][0].apply(exports,arguments)
 arguments[4][26][0].apply(exports,arguments)
 },{"dup":26}],109:[function(require,module,exports){
 arguments[4][27][0].apply(exports,arguments)
-},{"./pj_mlfn":110,"dup":27}],110:[function(require,module,exports){
+},{"dup":27}],110:[function(require,module,exports){
 arguments[4][28][0].apply(exports,arguments)
 },{"dup":28}],111:[function(require,module,exports){
 arguments[4][29][0].apply(exports,arguments)
@@ -16917,6 +18256,16 @@ arguments[4][30][0].apply(exports,arguments)
 },{"dup":30}],113:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
 },{"dup":31}],114:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"./pj_mlfn":115,"dup":32}],115:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33}],116:[function(require,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"dup":34}],117:[function(require,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"dup":35}],118:[function(require,module,exports){
+arguments[4][36][0].apply(exports,arguments)
+},{"dup":36}],119:[function(require,module,exports){
 module.exports = function (array){
   var out = {
     x: array[0],
@@ -16930,9 +18279,9 @@ module.exports = function (array){
   }
   return out;
 };
-},{}],115:[function(require,module,exports){
-arguments[4][32][0].apply(exports,arguments)
-},{"dup":32}],116:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
+arguments[4][37][0].apply(exports,arguments)
+},{"dup":37}],121:[function(require,module,exports){
 exports.wgs84 = {
   towgs84: "0,0,0",
   ellipse: "WGS84",
@@ -17013,15 +18362,15 @@ exports.rnb72 = {
   ellipse: "intl",
   datumName: "Reseau National Belge 1972"
 };
-},{}],117:[function(require,module,exports){
-arguments[4][34][0].apply(exports,arguments)
-},{"dup":34}],118:[function(require,module,exports){
-arguments[4][35][0].apply(exports,arguments)
-},{"dup":35}],119:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
+arguments[4][39][0].apply(exports,arguments)
+},{"dup":39}],123:[function(require,module,exports){
+arguments[4][40][0].apply(exports,arguments)
+},{"dup":40}],124:[function(require,module,exports){
 exports.ft = {to_meter: 0.3048};
 exports['us-ft'] = {to_meter: 1200 / 3937};
 
-},{}],120:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 var proj = require('./Proj');
 var transform = require('./transform');
 var wgs84 = proj('WGS84');
@@ -17086,11 +18435,11 @@ function proj4(fromProj, toProj, coord) {
   }
 }
 module.exports = proj4;
-},{"./Proj":93,"./transform":157}],121:[function(require,module,exports){
-arguments[4][38][0].apply(exports,arguments)
-},{"dup":38}],122:[function(require,module,exports){
-arguments[4][39][0].apply(exports,arguments)
-},{"dup":39}],123:[function(require,module,exports){
+},{"./Proj":98,"./transform":162}],126:[function(require,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"dup":43}],127:[function(require,module,exports){
+arguments[4][44][0].apply(exports,arguments)
+},{"dup":44}],128:[function(require,module,exports){
 var globals = require('./global');
 var parseProj = require('./projString');
 var wkt = require('./wkt');
@@ -17147,7 +18496,7 @@ function defs(name) {
 globals(defs);
 module.exports = defs;
 
-},{"./global":126,"./projString":130,"./wkt":158}],124:[function(require,module,exports){
+},{"./global":131,"./projString":135,"./wkt":163}],129:[function(require,module,exports){
 var Datum = require('./constants/Datum');
 var Ellipsoid = require('./constants/Ellipsoid');
 var extend = require('./extend');
@@ -17205,9 +18554,9 @@ module.exports = function(json) {
   return json;
 };
 
-},{"./constants/Datum":116,"./constants/Ellipsoid":117,"./datum":121,"./extend":125}],125:[function(require,module,exports){
-arguments[4][41][0].apply(exports,arguments)
-},{"dup":41}],126:[function(require,module,exports){
+},{"./constants/Datum":121,"./constants/Ellipsoid":122,"./datum":126,"./extend":130}],130:[function(require,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"dup":46}],131:[function(require,module,exports){
 module.exports = function(defs) {
   defs('EPSG:4326', "+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees");
   defs('EPSG:4269', "+title=NAD83 (long/lat) +proj=longlat +a=6378137.0 +b=6356752.31414036 +ellps=GRS80 +datum=NAD83 +units=degrees");
@@ -17220,7 +18569,7 @@ module.exports = function(defs) {
   defs['EPSG:102113'] = defs['EPSG:3857'];
 };
 
-},{}],127:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 var projs = [
   require('./projections/tmerc'),
   require('./projections/utm'),
@@ -17250,7 +18599,7 @@ module.exports = function(proj4){
     proj4.Proj.projections.add(proj);
   });
 };
-},{"./projections/aea":132,"./projections/aeqd":133,"./projections/cass":134,"./projections/cea":135,"./projections/eqc":136,"./projections/eqdc":137,"./projections/gnom":139,"./projections/krovak":140,"./projections/laea":141,"./projections/lcc":142,"./projections/mill":145,"./projections/moll":146,"./projections/nzmg":147,"./projections/omerc":148,"./projections/poly":149,"./projections/sinu":150,"./projections/somerc":151,"./projections/stere":152,"./projections/sterea":153,"./projections/tmerc":154,"./projections/utm":155,"./projections/vandg":156}],128:[function(require,module,exports){
+},{"./projections/aea":137,"./projections/aeqd":138,"./projections/cass":139,"./projections/cea":140,"./projections/eqc":141,"./projections/eqdc":142,"./projections/gnom":144,"./projections/krovak":145,"./projections/laea":146,"./projections/lcc":147,"./projections/mill":150,"./projections/moll":151,"./projections/nzmg":152,"./projections/omerc":153,"./projections/poly":154,"./projections/sinu":155,"./projections/somerc":156,"./projections/stere":157,"./projections/sterea":158,"./projections/tmerc":159,"./projections/utm":160,"./projections/vandg":161}],133:[function(require,module,exports){
 var proj4 = require('./core');
 proj4.defaultDatum = 'WGS84'; //default datum
 proj4.Proj = require('./Proj');
@@ -17263,7 +18612,7 @@ proj4.mgrs = require('mgrs');
 proj4.version = require('../package.json').version;
 require('./includedProjections')(proj4);
 module.exports = proj4;
-},{"../package.json":160,"./Point":92,"./Proj":93,"./common/toPoint":114,"./core":120,"./defs":123,"./includedProjections":127,"./transform":157,"mgrs":159}],129:[function(require,module,exports){
+},{"../package.json":165,"./Point":97,"./Proj":98,"./common/toPoint":119,"./core":125,"./defs":128,"./includedProjections":132,"./transform":162,"mgrs":164}],134:[function(require,module,exports){
 var defs = require('./defs');
 var wkt = require('./wkt');
 var projStr = require('./projString');
@@ -17300,7 +18649,7 @@ function parse(code){
 }
 
 module.exports = parse;
-},{"./defs":123,"./projString":130,"./wkt":158}],130:[function(require,module,exports){
+},{"./defs":128,"./projString":135,"./wkt":163}],135:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var PrimeMeridian = require('./constants/PrimeMeridian');
 var units = require('./constants/units');
@@ -17434,7 +18783,7 @@ module.exports = function(defData) {
   return self;
 };
 
-},{"./constants/PrimeMeridian":118,"./constants/units":119}],131:[function(require,module,exports){
+},{"./constants/PrimeMeridian":123,"./constants/units":124}],136:[function(require,module,exports){
 var projs = [
   require('./projections/merc'),
   require('./projections/longlat')
@@ -17470,27 +18819,27 @@ exports.start = function() {
   projs.forEach(add);
 };
 
-},{"./projections/longlat":143,"./projections/merc":144}],132:[function(require,module,exports){
-arguments[4][45][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/asinz":97,"../common/msfnz":106,"../common/qsfnz":111,"dup":45}],133:[function(require,module,exports){
-arguments[4][46][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/asinz":97,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/gN":102,"../common/imlfn":103,"../common/mlfn":105,"dup":46}],134:[function(require,module,exports){
-arguments[4][47][0].apply(exports,arguments)
-},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/gN":102,"../common/imlfn":103,"../common/mlfn":105,"dup":47}],135:[function(require,module,exports){
-arguments[4][48][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/iqsfnz":104,"../common/msfnz":106,"../common/qsfnz":111,"dup":48}],136:[function(require,module,exports){
-arguments[4][49][0].apply(exports,arguments)
-},{"../common/adjust_lat":95,"../common/adjust_lon":96,"dup":49}],137:[function(require,module,exports){
+},{"./projections/longlat":148,"./projections/merc":149}],137:[function(require,module,exports){
 arguments[4][50][0].apply(exports,arguments)
-},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/imlfn":103,"../common/mlfn":105,"../common/msfnz":106,"dup":50}],138:[function(require,module,exports){
+},{"../common/adjust_lon":101,"../common/asinz":102,"../common/msfnz":111,"../common/qsfnz":116,"dup":50}],138:[function(require,module,exports){
 arguments[4][51][0].apply(exports,arguments)
-},{"../common/srat":113,"dup":51}],139:[function(require,module,exports){
+},{"../common/adjust_lon":101,"../common/asinz":102,"../common/e0fn":103,"../common/e1fn":104,"../common/e2fn":105,"../common/e3fn":106,"../common/gN":107,"../common/imlfn":108,"../common/mlfn":110,"dup":51}],139:[function(require,module,exports){
 arguments[4][52][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/asinz":97,"dup":52}],140:[function(require,module,exports){
+},{"../common/adjust_lat":100,"../common/adjust_lon":101,"../common/e0fn":103,"../common/e1fn":104,"../common/e2fn":105,"../common/e3fn":106,"../common/gN":107,"../common/imlfn":108,"../common/mlfn":110,"dup":52}],140:[function(require,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"../common/iqsfnz":109,"../common/msfnz":111,"../common/qsfnz":116,"dup":53}],141:[function(require,module,exports){
 arguments[4][54][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"dup":54}],141:[function(require,module,exports){
+},{"../common/adjust_lat":100,"../common/adjust_lon":101,"dup":54}],142:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/qsfnz":111,"dup":55}],142:[function(require,module,exports){
+},{"../common/adjust_lat":100,"../common/adjust_lon":101,"../common/e0fn":103,"../common/e1fn":104,"../common/e2fn":105,"../common/e3fn":106,"../common/imlfn":108,"../common/mlfn":110,"../common/msfnz":111,"dup":55}],143:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"../common/srat":118,"dup":56}],144:[function(require,module,exports){
+arguments[4][57][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"../common/asinz":102,"dup":57}],145:[function(require,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"dup":59}],146:[function(require,module,exports){
+arguments[4][60][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"../common/qsfnz":116,"dup":60}],147:[function(require,module,exports){
 var EPSLN = 1.0e-10;
 var msfnz = require('../common/msfnz');
 var tsfnz = require('../common/tsfnz');
@@ -17627,9 +18976,9 @@ exports.inverse = function(p) {
 
 exports.names = ["Lambert Tangential Conformal Conic Projection", "Lambert_Conformal_Conic", "Lambert_Conformal_Conic_2SP", "lcc"];
 
-},{"../common/adjust_lon":96,"../common/msfnz":106,"../common/phi2z":107,"../common/sign":112,"../common/tsfnz":115}],143:[function(require,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"dup":57}],144:[function(require,module,exports){
+},{"../common/adjust_lon":101,"../common/msfnz":111,"../common/phi2z":112,"../common/sign":117,"../common/tsfnz":120}],148:[function(require,module,exports){
+arguments[4][62][0].apply(exports,arguments)
+},{"dup":62}],149:[function(require,module,exports){
 var msfnz = require('../common/msfnz');
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
@@ -17728,21 +19077,21 @@ exports.inverse = function(p) {
 
 exports.names = ["Mercator", "Popular Visualisation Pseudo Mercator", "Mercator_1SP", "Mercator_Auxiliary_Sphere", "merc"];
 
-},{"../common/adjust_lon":96,"../common/msfnz":106,"../common/phi2z":107,"../common/tsfnz":115}],145:[function(require,module,exports){
-arguments[4][59][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"dup":59}],146:[function(require,module,exports){
-arguments[4][60][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"dup":60}],147:[function(require,module,exports){
-arguments[4][61][0].apply(exports,arguments)
-},{"dup":61}],148:[function(require,module,exports){
-arguments[4][62][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/phi2z":107,"../common/tsfnz":115,"dup":62}],149:[function(require,module,exports){
-arguments[4][63][0].apply(exports,arguments)
-},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/gN":102,"../common/mlfn":105,"dup":63}],150:[function(require,module,exports){
+},{"../common/adjust_lon":101,"../common/msfnz":111,"../common/phi2z":112,"../common/tsfnz":120}],150:[function(require,module,exports){
 arguments[4][64][0].apply(exports,arguments)
-},{"../common/adjust_lat":95,"../common/adjust_lon":96,"../common/asinz":97,"../common/pj_enfn":108,"../common/pj_inv_mlfn":109,"../common/pj_mlfn":110,"dup":64}],151:[function(require,module,exports){
+},{"../common/adjust_lon":101,"dup":64}],151:[function(require,module,exports){
 arguments[4][65][0].apply(exports,arguments)
-},{"dup":65}],152:[function(require,module,exports){
+},{"../common/adjust_lon":101,"dup":65}],152:[function(require,module,exports){
+arguments[4][66][0].apply(exports,arguments)
+},{"dup":66}],153:[function(require,module,exports){
+arguments[4][67][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"../common/phi2z":112,"../common/tsfnz":120,"dup":67}],154:[function(require,module,exports){
+arguments[4][68][0].apply(exports,arguments)
+},{"../common/adjust_lat":100,"../common/adjust_lon":101,"../common/e0fn":103,"../common/e1fn":104,"../common/e2fn":105,"../common/e3fn":106,"../common/gN":107,"../common/mlfn":110,"dup":68}],155:[function(require,module,exports){
+arguments[4][69][0].apply(exports,arguments)
+},{"../common/adjust_lat":100,"../common/adjust_lon":101,"../common/asinz":102,"../common/pj_enfn":113,"../common/pj_inv_mlfn":114,"../common/pj_mlfn":115,"dup":69}],156:[function(require,module,exports){
+arguments[4][70][0].apply(exports,arguments)
+},{"dup":70}],157:[function(require,module,exports){
 var HALF_PI = Math.PI/2;
 var EPSLN = 1.0e-10;
 var sign = require('../common/sign');
@@ -17910,15 +19259,15 @@ exports.inverse = function(p) {
 };
 exports.names = ["stere", "Stereographic_South_Pole", "Polar Stereographic (variant B)"];
 
-},{"../common/adjust_lon":96,"../common/msfnz":106,"../common/phi2z":107,"../common/sign":112,"../common/tsfnz":115}],153:[function(require,module,exports){
-arguments[4][67][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"./gauss":138,"dup":67}],154:[function(require,module,exports){
-arguments[4][68][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/asinz":97,"../common/e0fn":98,"../common/e1fn":99,"../common/e2fn":100,"../common/e3fn":101,"../common/mlfn":105,"../common/sign":112,"dup":68}],155:[function(require,module,exports){
-arguments[4][69][0].apply(exports,arguments)
-},{"./tmerc":154,"dup":69}],156:[function(require,module,exports){
-arguments[4][70][0].apply(exports,arguments)
-},{"../common/adjust_lon":96,"../common/asinz":97,"dup":70}],157:[function(require,module,exports){
+},{"../common/adjust_lon":101,"../common/msfnz":111,"../common/phi2z":112,"../common/sign":117,"../common/tsfnz":120}],158:[function(require,module,exports){
+arguments[4][72][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"./gauss":143,"dup":72}],159:[function(require,module,exports){
+arguments[4][73][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"../common/asinz":102,"../common/e0fn":103,"../common/e1fn":104,"../common/e2fn":105,"../common/e3fn":106,"../common/mlfn":110,"../common/sign":117,"dup":73}],160:[function(require,module,exports){
+arguments[4][74][0].apply(exports,arguments)
+},{"./tmerc":159,"dup":74}],161:[function(require,module,exports){
+arguments[4][75][0].apply(exports,arguments)
+},{"../common/adjust_lon":101,"../common/asinz":102,"dup":75}],162:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var R2D = 57.29577951308232088;
 var PJD_3PARAM = 1;
@@ -17991,7 +19340,7 @@ module.exports = function transform(source, dest, point) {
 
   return point;
 };
-},{"./Proj":93,"./adjust_axis":94,"./common/toPoint":114,"./datum_transform":122}],158:[function(require,module,exports){
+},{"./Proj":98,"./adjust_axis":99,"./common/toPoint":119,"./datum_transform":127}],163:[function(require,module,exports){
 var D2R = 0.01745329251994329577;
 var extend = require('./extend');
 
@@ -18210,9 +19559,9 @@ module.exports = function(wkt, self) {
   return extend(self, obj.output);
 };
 
-},{"./extend":125}],159:[function(require,module,exports){
-arguments[4][74][0].apply(exports,arguments)
-},{"dup":74}],160:[function(require,module,exports){
+},{"./extend":130}],164:[function(require,module,exports){
+arguments[4][79][0].apply(exports,arguments)
+},{"dup":79}],165:[function(require,module,exports){
 module.exports={
   "name": "proj4",
   "version": "2.3.6",
@@ -18316,7 +19665,7 @@ module.exports={
   "readme": "ERROR: No README data found!"
 }
 
-},{}],161:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 var App = require('./components/App.jsx');
 
 React.render(
@@ -18324,4 +19673,4 @@ React.render(
   document.getElementById('app')
 );
 
-},{"./components/App.jsx":77}]},{},[161]);
+},{"./components/App.jsx":82}]},{},[166]);
