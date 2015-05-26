@@ -10,12 +10,12 @@ var TabSwitcher = React.createClass({
     return (
       <ul className="tabs">
         <li className="tab col s3">
-          <a href="#edit" onClick={this.onClick.bind(this, EDIT_TAB)}>
+          <a href="#edit" onClick={this.onClick.bind(this, EDIT_TAB)} className="blue-text accent-2">
             <i className="small mdi-editor-border-color"></i>
           </a>
         </li>
         <li className="tab col s3">
-          <a href="#list" onClick={this.onClick.bind(this, FEATURE_LIST_TAB)}>
+          <a href="#list" onClick={this.onClick.bind(this, FEATURE_LIST_TAB)} className="blue-text accent-2">
             <i className="small mdi-action-view-list"></i>
           </a>
         </li>

@@ -16215,7 +16215,7 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
             React.createElement("span", {className: "lever"}), 
             "OS National Grid"
           ), 
-          React.createElement("a", {href: "TODO", title: "Explain the difference between coordinate reference systems", className: "right"}, "What is this?")
+          React.createElement("a", {href: "TODO", title: "Explain the difference between coordinate reference systems", className: "pink-text right"}, "What is this?")
         )
       )
     );
@@ -16252,7 +16252,7 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
           React.createElement("li", null, React.createElement("a", {href: "https://github.com/rob-murray/gb-geojson", title: "What is this all about?"}, "About"))
         ), 
         React.createElement("nav", null, 
-          React.createElement("div", {className: "nav-wrapper green lighten-1"}, 
+          React.createElement("div", {className: "nav-wrapper pink"}, 
             React.createElement("a", {href: "#", className: "brand-logo"}, "GB-GeoJson"), 
             React.createElement("ul", {className: "right hide-on-med-and-down"}, 
               React.createElement("li", null, 
@@ -16443,12 +16443,12 @@ var TabSwitcher = React.createClass({displayName: "TabSwitcher",
     return (
       React.createElement("ul", {className: "tabs"}, 
         React.createElement("li", {className: "tab col s3"}, 
-          React.createElement("a", {href: "#edit", onClick: this.onClick.bind(this, EDIT_TAB)}, 
+          React.createElement("a", {href: "#edit", onClick: this.onClick.bind(this, EDIT_TAB), className: "blue-text accent-2"}, 
             React.createElement("i", {className: "small mdi-editor-border-color"})
           )
         ), 
         React.createElement("li", {className: "tab col s3"}, 
-          React.createElement("a", {href: "#list", onClick: this.onClick.bind(this, FEATURE_LIST_TAB)}, 
+          React.createElement("a", {href: "#list", onClick: this.onClick.bind(this, FEATURE_LIST_TAB), className: "blue-text accent-2"}, 
             React.createElement("i", {className: "small mdi-action-view-list"})
           )
         )

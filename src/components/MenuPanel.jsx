@@ -21,7 +21,7 @@ var MenuPanel = React.createClass({
           <li><a href="https://github.com/rob-murray/gb-geojson" title="What is this all about?">About</a></li>
         </ul>
         <nav>
-          <div className="nav-wrapper green lighten-1">
+          <div className="nav-wrapper pink">
             <a href="#" className="brand-logo">GB-GeoJson</a>
             <ul className="right hide-on-med-and-down">
               <li>

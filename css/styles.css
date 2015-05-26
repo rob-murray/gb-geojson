@@ -38,3 +38,8 @@ html, body {
 #menu-panel textarea {
   resize: none;
 }
+
+.tabs .indicator {
+  background-color: #448AFF;
+}
+

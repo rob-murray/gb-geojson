@@ -43,7 +43,7 @@ var ManualEditPanel = React.createClass({
             <span className="lever"></span>
             OS National Grid
           </label>
-          <a href="TODO" title="Explain the difference between coordinate reference systems" className="right">What is this?</a>
+          <a href="TODO" title="Explain the difference between coordinate reference systems" className="pink-text right">What is this?</a>
         </div>
       </div>
     );
