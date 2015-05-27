@@ -1,7 +1,21 @@
 
-// todo improve presentation
-function presentFeature(data) {
-  return JSON.stringify(data.properties);
+function iconClassesForFeatureType(featureType) {
+  var classes = 'circle large';
+  switch(featureType) {
+    case 'Point':
+        classes = classes + ' mdi-maps-place';
+        break;
+    case 'LineString':
+        classes = classes + ' mdi-content-remove';
+        break;
+    case 'Polygon':
+        classes = classes + ' mdi-image-panorama-wide-angle';
+        break;
+    default:
+        classes = classes + ' mdi-maps-layers';
+        break;
+  }
+  return classes;
 }
 
 var FeatureRow = React.createClass({
@@ -17,12 +31,17 @@ var FeatureRow = React.createClass({
 
   render: function() {
     var feature = this.props.feature,
-      featureType = feature.type
+      title = feature.type,
+      iconClasses = iconClassesForFeatureType(feature.type);
 
     return (
-      <li className='collection-item'>
-        <span className='title'>{featureType}</span>
-        <p>{presentFeature(feature)}
+      <li className='collection-item avatar'>
+        <i className={iconClasses}></i>
+        <span className='title'>{title}</span>
+        <p>
+          {Object.keys(feature.properties).map(function(k,i){
+            return <span className='feature-property' key={i}>{k}: {feature.properties[k]}<br /></span>
+          })}
         </p>
       </li>
     );
