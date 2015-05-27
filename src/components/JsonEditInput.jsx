@@ -18,7 +18,7 @@ function validateInput(data, successCallback, errorCallback) {
         JSON.parse(data)
       );
     } catch(e) {
-      validate(e, successCallback, errorCallback);
+      errorCallback(e);
     }
   }
 }
