@@ -1,7 +1,7 @@
 {
   "name": "gb-geojson",
   "version": "0.0.1",
-  "description": "Create, edit, transform GeoJSON map data in British National Grid reference system.",
+  "description": "View, create, edit, transform GeoJSON map data in British National Grid reference system.",
   "main": "index.html",
   "repository": {
     "type": "git",
