@@ -18,6 +18,14 @@ To aid local development I recommend running a small webserver to serve static c
 $ node server
 ```
 
+#### Build CSS
+
+Build the CSS output `styles.css`.
+
+```
+$ sass --sourcemap=none css/sass/styles.scss:css/styles.css
+```
+
 #### watchify
 
 Run `watchify` when developing locally:
