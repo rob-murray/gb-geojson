@@ -17377,9 +17377,23 @@ module.exports = FeatureList;
 
 },{"../geo/FeatureParser":92,"./FeatureRow.jsx":84}],84:[function(require,module,exports){
 
-// todo improve presentation
-function presentFeature(data) {
-  return JSON.stringify(data.properties);
+function iconClassesForFeatureType(featureType) {
+  var classes = 'circle large';
+  switch(featureType) {
+    case 'Point':
+        classes = classes + ' mdi-maps-place';
+        break;
+    case 'LineString':
+        classes = classes + ' mdi-content-remove';
+        break;
+    case 'Polygon':
+        classes = classes + ' mdi-image-panorama-wide-angle';
+        break;
+    default:
+        classes = classes + ' mdi-maps-layers';
+        break;
+  }
+  return classes;
 }
 
 var FeatureRow = React.createClass({displayName: "FeatureRow",
@@ -17395,12 +17409,17 @@ var FeatureRow = React.createClass({displayName: "FeatureRow",
 
   render: function() {
     var feature = this.props.feature,
-      featureType = feature.type
+      title = feature.type,
+      iconClasses = iconClassesForFeatureType(feature.type);
 
     return (
-      React.createElement("li", {className: "collection-item"}, 
-        React.createElement("span", {className: "title"}, featureType), 
-        React.createElement("p", null, presentFeature(feature)
+      React.createElement("li", {className: "collection-item avatar"}, 
+        React.createElement("i", {className: iconClasses}), 
+        React.createElement("span", {className: "title"}, title), 
+        React.createElement("p", null, 
+          Object.keys(feature.properties).map(function(k,i){
+            return React.createElement("span", {className: "feature-property", key: i}, k, ": ", feature.properties[k], React.createElement("br", null))
+          })
         )
       )
     );
@@ -17418,6 +17437,12 @@ function presentGeoJson(data) {
   return JSON.stringify(data, null, 2);
 }
 
+function errorsToSentence(errors) {
+  return errors.map(function(err){
+    return err.message;
+  }).join(', ');
+}
+
 function validateInput(data, successCallback, errorCallback) {
   var errors = GeoJsonHint.hint(data);
   if (errors instanceof Error) {
@@ -17430,7 +17455,7 @@ function validateInput(data, successCallback, errorCallback) {
         JSON.parse(data)
       );
     } catch(e) {
-      validate(e, successCallback, errorCallback);
+      errorCallback(e);
     }
   }
 }
@@ -17478,26 +17503,30 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
   },
 
   render: function() {
-    var classes = 'materialize-textarea',
+    var inputClasses = 'materialize-textarea',
       errorClasses = 'help',
       editableGeoJson,
-      errTxt = '';
+      errorDisplay;
 
     // todo urggh; there's some junk here
 
     if(!this.state.errors) {
       // we dont want to do anything with this in error state, so dont force
       // dom update of the json input
-      editableGeoJson = presentGeoJson(this.props.geoJson)
+      editableGeoJson = presentGeoJson(this.props.geoJson);
     }
 
     if(this.state.focus) {
-      classes = classes + ' selected-input';
+      inputClasses = inputClasses + ' selected-input';
     }
 
     if(this.state.errors) {
-      errTxt = JSON.stringify(this.state.errors)
-      errorClasses = errorClasses + ' has-error'
+      var errorMessage = errorsToSentence(this.state.errors),
+        errorClasses = "help error-message"
+      errorDisplay = React.createElement("div", {ref: "errors", className: "error"}, 
+          React.createElement("p", {className: errorClasses}, errorMessage)
+        )
+      inputClasses = inputClasses + " invalid";
     }
 
     return (
@@ -17505,13 +17534,13 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
         React.createElement("textarea", {
           rows: "20", 
           cols: "10", 
-          className: classes, 
+          className: inputClasses, 
           onFocus: this.onInputFocus, 
           onBlur: this.onInputBlur, 
           onChange: this.onInputChange, 
           value: editableGeoJson}
         ), 
-        React.createElement("div", {ref: "errs", className: errorClasses}, errTxt)
+        errorDisplay
       )
     );
   }

@@ -6,6 +6,12 @@ function presentGeoJson(data) {
   return JSON.stringify(data, null, 2);
 }
 
+function errorsToSentence(errors) {
+  return errors.map(function(err){
+    return err.message;
+  }).join(', ');
+}
+
 function validateInput(data, successCallback, errorCallback) {
   var errors = GeoJsonHint.hint(data);
   if (errors instanceof Error) {
@@ -66,26 +72,30 @@ var JsonEditInput = React.createClass({
   },
 
   render: function() {
-    var classes = 'materialize-textarea',
+    var inputClasses = 'materialize-textarea',
       errorClasses = 'help',
       editableGeoJson,
-      errTxt = '';
+      errorDisplay;
 
     // todo urggh; there's some junk here
 
     if(!this.state.errors) {
       // we dont want to do anything with this in error state, so dont force
       // dom update of the json input
-      editableGeoJson = presentGeoJson(this.props.geoJson)
+      editableGeoJson = presentGeoJson(this.props.geoJson);
     }
 
     if(this.state.focus) {
-      classes = classes + ' selected-input';
+      inputClasses = inputClasses + ' selected-input';
     }
 
     if(this.state.errors) {
-      errTxt = JSON.stringify(this.state.errors)
-      errorClasses = errorClasses + ' has-error'
+      var errorMessage = errorsToSentence(this.state.errors),
+        errorClasses = "help error-message"
+      errorDisplay = <div ref="errors" className="error">
+          <p className={errorClasses}>{errorMessage}</p>
+        </div>
+      inputClasses = inputClasses + " invalid";
     }
 
     return (
@@ -93,13 +103,13 @@ var JsonEditInput = React.createClass({
         <textarea
           rows='20'
           cols='10'
-          className={classes}
+          className={inputClasses}
           onFocus={this.onInputFocus}
           onBlur={this.onInputBlur}
           onChange={this.onInputChange}
           value={editableGeoJson}
         />
-        <div ref="errs" className={errorClasses}>{errTxt}</div>
+        {errorDisplay}
       </div>
     );
   }
