@@ -23,7 +23,7 @@ $ node server
 Build the CSS output `styles.css`.
 
 ```
-$ sass --sourcemap=none css/sass/styles.scss:dist/styles.css
+$ sass --sourcemap=none css/styles.scss:dist/styles.css
 ```
 
 #### watchify

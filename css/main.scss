@@ -15,3 +15,15 @@ html, body {
   width: 300px;
   z-index: 1005;
 }
+
+/* errors */
+.error {
+  margin-bottom: 10px;
+  padding-bottom: 3px;
+  color: #d50000;
+}
+
+.error-message {
+  background: #ffcdd2;
+  padding: 8px;
+}
