@@ -1,0 +1,17 @@
+/* main.scss */
+
+html, body {
+  height: 100%;
+}
+
+#app, .map {
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:100%;
+}
+
+.map-panel {
+  width: 300px;
+  z-index: 1005;
+}

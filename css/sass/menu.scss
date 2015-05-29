@@ -1,0 +1,22 @@
+/* menu.scss */
+
+#menu-panel {
+  width: 500px;
+  max-width: 500px;
+  top: 15px;
+  left: 15px;
+  position: fixed;
+  margin: 0;
+
+  .brand-logo {
+    margin-left: 10px;
+  }
+
+  textarea {
+    resize: none;
+  }
+}
+
+.tabs .indicator {
+  background-color: #448AFF;
+}

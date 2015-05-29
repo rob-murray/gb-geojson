@@ -1,45 +1,30 @@
-/* styles.css */
+/* styles.scss */
+/* main.scss */
 html, body {
-    height: 100%;
-}
+  height: 100%; }
 
 #app, .map {
-  position:absolute;
-  top:0;
-  bottom:0;
-  width:100%;
-}
-
-#app, .map {
-  position:absolute;
-  top:0;
-  bottom:0;
-  width:100%;
-}
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%; }
 
 .map-panel {
   width: 300px;
-  z-index: 1005;
-}
+  z-index: 1005; }
 
+/* menu.scss */
 #menu-panel {
   width: 500px;
   max-width: 500px;
   top: 15px;
   left: 15px;
   position: fixed;
-  margin: 0;
-}
-
-#menu-panel .brand-logo {
-  margin-left: 10px;
-}
-
-#menu-panel textarea {
-  resize: none;
-}
+  margin: 0; }
+  #menu-panel .brand-logo {
+    margin-left: 10px; }
+  #menu-panel textarea {
+    resize: none; }
 
 .tabs .indicator {
-  background-color: #448AFF;
-}
-
+  background-color: #448AFF; }
