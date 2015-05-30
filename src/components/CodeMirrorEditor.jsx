@@ -45,10 +45,11 @@ var CodeMirrorEditor = React.createClass({
     var editor = React.createElement('textarea', {
       ref: 'editor',
       value: this.props.value,
+      className: 'editor',
       onChange: this.props.onChange
     });
 
-    return React.createElement('div', {style: this.props.style, className: this.props.className}, editor);
+    return React.createElement('div', {className: 'editor-container'}, editor);
   }
 });
 

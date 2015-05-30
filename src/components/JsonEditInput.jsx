@@ -89,7 +89,7 @@ var JsonEditInput = React.createClass({
     }
 
     return (
-      <div id='jsonContainer'>
+      <div id='jsonContainer' className='input-field'>
         <CodeMirrorEditor value={editableJsonContent} onChange={this.onInputChange} />
         {errorDisplay}
       </div>

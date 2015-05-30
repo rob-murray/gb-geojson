@@ -8,22 +8,24 @@
   left: 15px;
   position: fixed;
   margin: 0;
+  max-height: 90%;
+  height: auto;
+
+  .card-content {
+    height: 100%;
+  }
 
   .brand-logo {
     margin-left: 10px;
   }
 
-  textarea {
-    resize: none;
+  .editor-container {
+    margin-bottom: 5px;
+    border-bottom: 1px solid $accent-color !important;
+    box-shadow: 0 1px 0 0 $accent-color !important;
   }
-}
 
-.tabs .indicator {
-  background-color: $accent-color;
-}
-
-/* awful hack to style the textarea border-bottom color */
-.materialize-textarea:focus {
-  border-bottom: 1px solid $accent-color !important;
-  box-shadow: 0 1px 0 0 $accent-color !important;
+  .tabs .indicator {
+    background-color: $accent-color;
+  }
 }

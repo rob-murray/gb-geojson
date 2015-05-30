@@ -48,16 +48,23 @@ html, body {
   top: 15px;
   left: 15px;
   position: fixed;
-  margin: 0; }
+  margin: 0;
+  max-height: 90%;
+  height: auto; }
+  #menu-panel .card-content {
+    height: 100%; }
   #menu-panel .brand-logo {
     margin-left: 10px; }
-  #menu-panel textarea {
-    resize: none; }
+  #menu-panel .editor-container {
+    margin-bottom: 5px;
+    border-bottom: 1px solid #448AFF !important;
+    box-shadow: 0 1px 0 0 #448AFF !important; }
+  #menu-panel .tabs .indicator {
+    background-color: #448AFF; }
 
-.tabs .indicator {
-  background-color: #448AFF; }
+/* code-mirror-overrides.scss */
+.CodeMirror {
+  height: auto; }
 
-/* awful hack to style the textarea border-bottom color */
-.materialize-textarea:focus {
-  border-bottom: 1px solid #448AFF !important;
-  box-shadow: 0 1px 0 0 #448AFF !important; }
+.CodeMirror-gutter {
+  background-color: #fff; }
