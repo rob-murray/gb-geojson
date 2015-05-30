@@ -10,8 +10,7 @@ var CHANGE_EVENT = 'change';
 // Reference to GeoJson objs
 // Swap how this is stored at somepoint, version it, etc
 // TODO fix: We always store both OSGB36 and WGS84 projections updating the
-//  other upon change
-// Term usage not strictly correct...
+//  other upon change. Design this better.
 //
 var _osgb = {};
 var _wgs84 = {};
@@ -20,7 +19,6 @@ var _inputCrs = AppConstants.CRS_LONLAT;
 var emptyGeoJson = Utils.featureCollection([]);
 var initialCrs = AppConstants.CRS_LONLAT;
 
-// todo
 function reproject(geoJson, requestedCrs) {
   if(requestedCrs === AppConstants.CRS_LONLAT) {
     return ReprojectGeoJson.toWGS84(geoJson);
@@ -33,8 +31,6 @@ function reproject(geoJson, requestedCrs) {
  * Write GeoJson data in the specified Reference System.
  */
 function setData(geoJson, inputReferenceSystem) {
-  console.log(["AppStore.writing", inputReferenceSystem]);
-
   if(inputReferenceSystem === AppConstants.CRS_LONLAT) {
     _wgs84 = geoJson;
     _osgb = reproject(geoJson, AppConstants.CRS_BNG);
@@ -86,9 +82,7 @@ function update(data, inputReferenceSystem) {
  * Reset all.
  */
 function destroy() {
-  _osgb = emptyGeoJson;
-  _wgs84 = emptyGeoJson;
-  setInputCrs(initialCrs);
+  _osgb = _wgs84 = emptyGeoJson;
 }
 
 var AppStore = assign({}, EventEmitter.prototype, {
@@ -100,7 +94,6 @@ var AppStore = assign({}, EventEmitter.prototype, {
       requestedCrs = _inputCrs
     }
 
-    console.log(["AppStore.getItem", requestedCrs]);
     return {
       geoJson: getData(requestedCrs),
       inputReferenceSystem: _inputCrs
