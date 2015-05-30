@@ -1,12 +1,17 @@
 var AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),
-  GeoJsonHint = require('geojsonhint');
+  GeoJsonHint = require('geojsonhint'),
+  CodeMirrorEditor = require('./CodeMirrorEditor.jsx');
 
 function presentGeoJson(data) {
   return JSON.stringify(data, null, 2);
 }
 
 function errorsToSentence(errors) {
+  if (errors instanceof Error) {
+    return errors.toString();
+  }
+
   return errors.map(function(err){
     return err.message;
   }).join(', ');
@@ -14,6 +19,7 @@ function errorsToSentence(errors) {
 
 function validateInput(data, successCallback, errorCallback) {
   var errors = GeoJsonHint.hint(data);
+
   if (errors instanceof Error) {
     errorCallback(errors);
   } else if (errors.length) {
@@ -42,29 +48,20 @@ var JsonEditInput = React.createClass({
 
   getInitialState: function() {
     return {
-      focus: false,
       errors: null
     };
   },
 
   componentWillReceiveProps: function(nextProps) {
+    // assume GeoJson passed in is valid :)
     this.setState({
       errors: null
     });
   },
 
-  onInputFocus: function(e) {
-    this.setState({focus: true});
-  },
-
-  onInputBlur: function(e) {
-    this.setState({focus: false});
-  },
-
   onInputChange: function(e) {
-    if (e.currentTarget.value.trim()) {
-      validateInput(e.currentTarget.value, success, this.onError);
-    }
+    // handle update from editor
+    validateInput(e.target.value, success, this.onError);
   },
 
   onError: function(errors) {
@@ -72,43 +69,28 @@ var JsonEditInput = React.createClass({
   },
 
   render: function() {
-    var inputClasses = 'materialize-textarea',
-      errorClasses = 'help',
-      editableGeoJson,
+    var errorClasses = 'help',
+      editableJsonContent,
       errorDisplay;
-
-    // todo urggh; there's some junk here
 
     if(!this.state.errors) {
       // we dont want to do anything with this in error state, so dont force
       // dom update of the json input
-      editableGeoJson = presentGeoJson(this.props.geoJson);
-    }
-
-    if(this.state.focus) {
-      inputClasses = inputClasses + ' selected-input';
+      editableJsonContent = presentGeoJson(this.props.geoJson);
     }
 
     if(this.state.errors) {
       var errorMessage = errorsToSentence(this.state.errors),
-        errorClasses = "help error-message"
+        errorClasses = "help error-message";
+
       errorDisplay = <div ref="errors" className="error">
           <p className={errorClasses}>{errorMessage}</p>
-        </div>
-      inputClasses = inputClasses + " invalid";
+        </div>;
     }
 
     return (
-      <div id='jsonContainer' className='input-field'>
-        <textarea
-          rows='20'
-          cols='10'
-          className={inputClasses}
-          onFocus={this.onInputFocus}
-          onBlur={this.onInputBlur}
-          onChange={this.onInputChange}
-          value={editableGeoJson}
-        />
+      <div id='jsonContainer'>
+        <CodeMirrorEditor value={editableJsonContent} onChange={this.onInputChange} />
         {errorDisplay}
       </div>
     );
