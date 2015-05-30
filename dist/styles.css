@@ -55,7 +55,12 @@ html, body {
     height: 100%; }
   #menu-panel .brand-logo {
     margin-left: 10px; }
+  #menu-panel #jsonContainer {
+    position: relative;
+    height: auto; }
   #menu-panel .editor-container {
+    position: relative;
+    height: 100%;
     margin-bottom: 5px;
     border-bottom: 1px solid #448AFF !important;
     box-shadow: 0 1px 0 0 #448AFF !important; }
@@ -64,6 +69,7 @@ html, body {
 
 /* code-mirror-overrides.scss */
 .CodeMirror {
+  overflow-y: auto;
   height: auto; }
 
 .CodeMirror-gutter {
