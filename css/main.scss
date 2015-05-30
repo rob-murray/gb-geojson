@@ -1,4 +1,5 @@
 /* main.scss */
+@import 'variables';
 
 html, body {
   height: 100%;
@@ -20,10 +21,10 @@ html, body {
 .error {
   margin-bottom: 10px;
   padding-bottom: 3px;
-  color: #d50000;
+  color: $error-highlight-color;
 }
 
 .error-message {
-  background: #ffcdd2;
+  background: $error-background-color;
   padding: 8px;
 }

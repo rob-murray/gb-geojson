@@ -1,5 +1,14 @@
 /* styles.scss */
 /* main.scss */
+/* pallette
+.dark-primary-color    { background: #C2185B; }
+.default-primary-color { background: #E91E63; } pink
+.light-primary-color   { background: #F8BBD0; }
+.text-primary-color    { color: #FFFFFF; }
+.accent-color          { background: #448AFF; } blue
+.primary-text-color    { color: #212121; }
+.secondary-text-color  { color: #727272; }
+.divider-color         { border-color: #B6B6B6; } */
 html, body {
   height: 100%; }
 
@@ -24,6 +33,15 @@ html, body {
   padding: 8px; }
 
 /* menu.scss */
+/* pallette
+.dark-primary-color    { background: #C2185B; }
+.default-primary-color { background: #E91E63; } pink
+.light-primary-color   { background: #F8BBD0; }
+.text-primary-color    { color: #FFFFFF; }
+.accent-color          { background: #448AFF; } blue
+.primary-text-color    { color: #212121; }
+.secondary-text-color  { color: #727272; }
+.divider-color         { border-color: #B6B6B6; } */
 #menu-panel {
   width: 500px;
   max-width: 500px;

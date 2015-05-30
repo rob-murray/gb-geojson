@@ -1,4 +1,5 @@
 /* menu.scss */
+@import 'variables';
 
 #menu-panel {
   width: 500px;
@@ -18,11 +19,11 @@
 }
 
 .tabs .indicator {
-  background-color: #448AFF;
+  background-color: $accent-color;
 }
 
 /* awful hack to style the textarea border-bottom color */
 .materialize-textarea:focus {
-  border-bottom: 1px solid #448AFF !important;
-  box-shadow: 0 1px 0 0 #448AFF !important;
+  border-bottom: 1px solid $accent-color !important;
+  box-shadow: 0 1px 0 0 $accent-color !important;
 }
