@@ -40,9 +40,11 @@
   },
   "devDependencies": {
     "browserify": "^10.2.1",
+    "codemirror": "^5.3.0",
     "envify": "^3.4.0",
     "express": "^4.12.4",
     "flux": "^2.0.3",
+    "gbify-geojson": "^0.1.0",
     "geojsonhint": "^1.0.0",
     "jsxhint": "^0.15.0",
     "keymirror": "^0.1.1",
@@ -53,7 +55,6 @@
     "reactify": "^1.1.1",
     "uglify-js": "^2.4.23",
     "underscore": "^1.8.3",
-    "watchify": "^3.2.1",
-    "codemirror": "^5.3.0"
+    "watchify": "^3.2.1"
   }
 }

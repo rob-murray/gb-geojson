@@ -1,4 +1,4 @@
-var gbifygeoson = require("../../../gbgeojsonify");
+var gbifygeoson = require("gbify-geojson");
 
 module.exports = {
   toOSGB36: function(geoJson) {
