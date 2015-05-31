@@ -27706,6 +27706,25 @@ module.exports = App;
 },{"../constants/AppConstants":162,"../stores/GeoStore":167,"./ManualEditPanel.jsx":158,"./MenuPanel.jsx":159,"./OSMap.jsx":160}],154:[function(require,module,exports){
 var CodeMirror = require('codemirror');
 
+function valid(input) {
+  try {
+    JSON.parse(input)
+  } catch(e) {
+    return false;
+  }
+  return true;
+}
+
+function changesShouldBeSentForUpdate(editorContent, propValue) {
+  // If the current data is invalid then we cant compare so update
+  if(!valid(editorContent) || !valid(propValue)) {
+    return true;
+  }
+
+  // This naive geojson object comparison should be enough to know if we should update
+  return (JSON.stringify(JSON.parse(editorContent)) !== JSON.stringify(JSON.parse(propValue)));
+}
+
 // CodeMirror React component
 // based on https://github.com/ForbesLindesay/react-code-mirror/blob/master/index.js
 //
@@ -27736,9 +27755,10 @@ var CodeMirrorEditor = React.createClass({displayName: "CodeMirrorEditor",
   },
 
   componentDidUpdate: function() {
-    console.log("componentDidUpdate")
     if (this.editor) {
       if (this.props.value != null || this.props.value !== undefined) {
+        // simply update the editor if the incoming content
+        // string comparison is different to current
         if (this.editor.getValue() !== this.props.value) {
           this.editor.setValue(this.props.value);
         }
@@ -27747,24 +27767,16 @@ var CodeMirrorEditor = React.createClass({displayName: "CodeMirrorEditor",
   },
 
   handleChange: function() {
-    console.log("handleChange")
     if (this.editor) {
-      var value = this.editor.getValue();
-      if (value !== this.props.value) {
-        this.props.onChange({
-          target: {value: value}
-        });
+      var currentValue = this.editor.getValue();
 
-        if (this.props.value != null || this.props.value !== undefined) {
-          if (this.editor.getValue() !== this.props.value) {
-            if (this.state.isControlled) {
-              console.log("writing...")
-              this.editor.setValue(this.props.value);
-            } else {
-              this.props.value = value;
-            }
-          }
-        }
+      // we only want to push the update up if the change is significant,
+      // otherwise the irrelevant changes will come back again updating the
+      // editor
+      if(changesShouldBeSentForUpdate(currentValue, this.props.value)) {
+        this.props.onChange({
+          target: {value: currentValue}
+        });
       }
     }
   },
