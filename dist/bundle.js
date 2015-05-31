@@ -27987,6 +27987,8 @@ var JsonEditInput = require('./JsonEditInput.jsx'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants');
 
+var CRS_LINK = 'https://github.com/rob-murray/gb-geojson#what-is-the-difference-between-lon-lat-and-os-national-grid';
+
 var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
   getDefaultProps: function() {
     return {
@@ -28026,7 +28028,7 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
             React.createElement("span", {className: "lever"}), 
             "OS National Grid"
           ), 
-          React.createElement("a", {href: "TODO", title: "Explain the difference between coordinate reference systems", className: "pink-text right"}, "What is this?")
+          React.createElement("a", {href: CRS_LINK, title: "Explain the difference between coordinate reference systems", className: "pink-text right"}, "What is this?")
         )
       )
     );
