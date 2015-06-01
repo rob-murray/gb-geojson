@@ -28161,10 +28161,9 @@ var OSMap = React.createClass({displayName: "OSMap",
   },
 
   componentWillUpdate: function(nextProps, nextState) {
-    console.log("OSMap.componentWillUpdate")
     transformGeoJsonToLayers(nextProps.geoJson, this.editableLayer);
 
-    if(this.editableLayer.getBounds().isValid()) { // FIXME this errors ...when?...
+    if(this.editableLayer.getBounds().isValid()) {
       this.map.fitBounds(this.editableLayer.getBounds());
     }
   },
@@ -28225,7 +28224,6 @@ var OSMap = React.createClass({displayName: "OSMap",
   _created: function(e) {
     this.editableLayer.addLayer(e.layer);
     this._update();
-    this.map.fitBounds(e.layer);
   },
 
   _update: function() {
