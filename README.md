@@ -27,6 +27,15 @@ Note that the [GeoJSON spec](http://geojson.org/geojson-spec.html#positions) sta
 The [GeoJSON spec](http://geojson.org/geojson-spec.html#coordinate-reference-system-objects) lists the `CRS` property but this is ignored by **gb-geojson** at present due to ambiguity and to maintain tool simplicity.
 
 
+### Example data
+
+Checkout the `data/` directory for some example GeoJSON.
+
+```json
+{"type":"Feature","properties":{"popupContent":"I am SU43."},"geometry":{"type":"Polygon","coordinates":[[[440000,130000],[450000,130000],[450000,140000],[440000,140000],[440000,130000]]]}}
+```
+
+
 ## Development
 
 #### Run local webserver
@@ -42,7 +51,7 @@ $ node server
 Build the CSS output `styles.css`.
 
 ```
-$ sass --sourcemap=none css/styles.scss:dist/styles.css
+$ sass --sourcemap=none --style compressed css/styles.scss:dist/styles.css
 ```
 
 #### watchify
