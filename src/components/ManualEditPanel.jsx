@@ -13,8 +13,9 @@ var ManualEditPanel = React.createClass({
   },
 
   onFormatChange: function(e) {
-    var checked = e.currentTarget.checked;
-    var inputReferenceSystem = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
+    var checked = e.currentTarget.checked,
+      inputReferenceSystem = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
+
     AppActions.referenceSystemChanged(
       inputReferenceSystem
     );
@@ -44,6 +45,7 @@ var ManualEditPanel = React.createClass({
             <span className="lever"></span>
             OS National Grid
           </label>
+          <i className="mdi-action-exit-to-app tiny right"></i>
           <a href={CRS_LINK} title="Explain the difference between coordinate reference systems" className="pink-text right">What is this?</a>
         </div>
       </div>
