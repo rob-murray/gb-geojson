@@ -3,16 +3,16 @@ function iconClassesForFeatureType(featureType) {
   var classes = 'circle large';
   switch(featureType) {
     case 'Point':
-        classes = classes + ' mdi-maps-place';
+        classes += ' mdi-maps-place';
         break;
     case 'LineString':
-        classes = classes + ' mdi-content-remove';
+        classes += ' mdi-content-remove';
         break;
     case 'Polygon':
-        classes = classes + ' mdi-image-panorama-wide-angle';
+        classes += ' mdi-image-panorama-wide-angle';
         break;
     default:
-        classes = classes + ' mdi-maps-layers';
+        classes += ' mdi-maps-layers';
         break;
   }
   return classes;

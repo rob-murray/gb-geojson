@@ -1,6 +1,6 @@
 var CodeMirror = require('codemirror');
 
-function valid(input) {
+function parseable(input) {
   try {
     JSON.parse(input)
   } catch(e) {
@@ -11,7 +11,7 @@ function valid(input) {
 
 function changesShouldBeSentForUpdate(editorContent, propValue) {
   // If the current data is invalid then we cant compare so update
-  if(!valid(editorContent) || !valid(propValue)) {
+  if(!parseable(editorContent) || !parseable(propValue)) {
     return true;
   }
 

@@ -30,8 +30,8 @@ function addPopupToLayer(layer) {
   content = JSON.stringify(layer.toGeoJSON().properties);
 
   layer.bindPopup(L.popup({
-    maxWidth: 500,
-    maxHeight: 400,
+    maxWidth: 600,
+    maxHeight: 450,
   }, layer).setContent(content));
 }
 

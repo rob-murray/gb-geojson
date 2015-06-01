@@ -47,9 +47,7 @@ var App = React.createClass({
    * Event handler for 'change' events coming from the GeoStore
    */
   _onChange: function() {
-    var state = getState()
-    console.log(["App._onChange", JSON.stringify(state)]);
-    this.setState(state);
+    this.setState(getState());
   }
 });
 

@@ -27695,9 +27695,7 @@ var App = React.createClass({displayName: "App",
    * Event handler for 'change' events coming from the GeoStore
    */
   _onChange: function() {
-    var state = getState()
-    console.log(["App._onChange", JSON.stringify(state)]);
-    this.setState(state);
+    this.setState(getState());
   }
 });
 
@@ -27706,7 +27704,7 @@ module.exports = App;
 },{"../constants/AppConstants":162,"../stores/GeoStore":167,"./ManualEditPanel.jsx":158,"./MenuPanel.jsx":159,"./OSMap.jsx":160}],154:[function(require,module,exports){
 var CodeMirror = require('codemirror');
 
-function valid(input) {
+function parseable(input) {
   try {
     JSON.parse(input)
   } catch(e) {
@@ -27717,7 +27715,7 @@ function valid(input) {
 
 function changesShouldBeSentForUpdate(editorContent, propValue) {
   // If the current data is invalid then we cant compare so update
-  if(!valid(editorContent) || !valid(propValue)) {
+  if(!parseable(editorContent) || !parseable(propValue)) {
     return true;
   }
 
@@ -27832,16 +27830,16 @@ function iconClassesForFeatureType(featureType) {
   var classes = 'circle large';
   switch(featureType) {
     case 'Point':
-        classes = classes + ' mdi-maps-place';
+        classes += ' mdi-maps-place';
         break;
     case 'LineString':
-        classes = classes + ' mdi-content-remove';
+        classes += ' mdi-content-remove';
         break;
     case 'Polygon':
-        classes = classes + ' mdi-image-panorama-wide-angle';
+        classes += ' mdi-image-panorama-wide-angle';
         break;
     default:
-        classes = classes + ' mdi-maps-layers';
+        classes += ' mdi-maps-layers';
         break;
   }
   return classes;
@@ -27997,8 +27995,9 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
   },
 
   onFormatChange: function(e) {
-    var checked = e.currentTarget.checked;
-    var inputReferenceSystem = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
+    var checked = e.currentTarget.checked,
+      inputReferenceSystem = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
+
     AppActions.referenceSystemChanged(
       inputReferenceSystem
     );
@@ -28028,6 +28027,7 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
             React.createElement("span", {className: "lever"}), 
             "OS National Grid"
           ), 
+          React.createElement("i", {className: "mdi-action-exit-to-app tiny right"}), 
           React.createElement("a", {href: CRS_LINK, title: "Explain the difference between coordinate reference systems", className: "pink-text right"}, "What is this?")
         )
       )
@@ -28133,8 +28133,8 @@ function addPopupToLayer(layer) {
   content = JSON.stringify(layer.toGeoJSON().properties);
 
   layer.bindPopup(L.popup({
-    maxWidth: 500,
-    maxHeight: 400,
+    maxWidth: 600,
+    maxHeight: 450,
   }, layer).setContent(content));
 }
 
