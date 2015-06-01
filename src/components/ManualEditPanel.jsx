@@ -22,7 +22,7 @@ var ManualEditPanel = React.createClass({
   },
 
   render: function(){
-    var checkbox_value = this._inputReferenceSystemMapping();
+    var checkboxValue = this._inputReferenceSystemMapping();
 
     return (
       <div>
@@ -38,7 +38,7 @@ var ManualEditPanel = React.createClass({
             <input
               ref="inputReferenceSystem"
               type="checkbox"
-              value={checkbox_value}
+              value={checkboxValue}
               onChange={this.onFormatChange}
               className="z-depth-1"
             />
@@ -53,7 +53,7 @@ var ManualEditPanel = React.createClass({
   },
 
   _inputReferenceSystemMapping: function() {
-    this.props.inputReferenceSystem == AppConstants.CRS_BNG;
+    return this.props.inputReferenceSystem === AppConstants.CRS_BNG;
   }
 });
 

@@ -40,7 +40,7 @@ var FeatureRow = React.createClass({
         <span className='title'>{title}</span>
         <p>
           {Object.keys(feature.properties).map(function(k,i){
-            return <span className='feature-property' key={i}>{k}: {feature.properties[k]}<br /></span>
+            return <span className='feature-property' key={i}>{k}: {feature.properties[k]}<br /></span>;
           })}
         </p>
       </li>
@@ -48,4 +48,4 @@ var FeatureRow = React.createClass({
   }
 });
 
-module.exports = FeatureRow
+module.exports = FeatureRow;

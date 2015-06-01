@@ -61,7 +61,7 @@ function getData(requestedCrs) {
  * Store the current input Reference System.
  */
 function setInputCrs(inputReferenceSystem) {
-  _inputCrs = inputReferenceSystem
+  _inputCrs = inputReferenceSystem;
 }
 
 /**
@@ -91,7 +91,7 @@ var AppStore = assign({}, EventEmitter.prototype, {
    */
   getItem: function(requestedCrs) {
     if(!requestedCrs) {
-      requestedCrs = _inputCrs
+      requestedCrs = _inputCrs;
     }
 
     return {
@@ -128,10 +128,10 @@ AppDispatcher.register(function(action) {
       data = action.data;
       inputReferenceSystem = action.inputReferenceSystem;
       if(!inputReferenceSystem) {
-        inputReferenceSystem = _inputCrs
+        inputReferenceSystem = _inputCrs;
       }
       if (data !== null) {
-        setData(data, inputReferenceSystem);
+        create(data, inputReferenceSystem);
         AppStore.emitChange();
       }
       break;
@@ -158,7 +158,7 @@ AppDispatcher.register(function(action) {
   }
 });
 
-setData(emptyGeoJson, initialCrs);
+create(emptyGeoJson, initialCrs);
 setInputCrs(initialCrs);
 
 module.exports = AppStore;

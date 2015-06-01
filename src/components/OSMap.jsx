@@ -18,21 +18,21 @@ function transformLayerToGeoJson(layer) {
   return GeoUtils.featureCollection(features);
 }
 
-function transformGeoJsonToLayers(geojson, editableLayer) {
-  editableLayer.clearLayers();
-  L.geoJson(geojson, {}).eachLayer(function add(l) {
-    addPopupToLayer(l)
-    l.addTo(editableLayer);
-  });
-}
-
 function addPopupToLayer(layer) {
-  content = JSON.stringify(layer.toGeoJSON().properties);
+  var content = JSON.stringify(layer.toGeoJSON().properties);
 
   layer.bindPopup(L.popup({
     maxWidth: 600,
     maxHeight: 450,
   }, layer).setContent(content));
+}
+
+function transformGeoJsonToLayers(geojson, editableLayer) {
+  editableLayer.clearLayers();
+  L.geoJson(geojson, {}).eachLayer(function add(l) {
+    addPopupToLayer(l);
+    l.addTo(editableLayer);
+  });
 }
 
 var OSMap = React.createClass({

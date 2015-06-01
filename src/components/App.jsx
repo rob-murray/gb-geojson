@@ -40,7 +40,7 @@ var App = React.createClass({
   },
 
   _geoJsonForMapView: function() {
-    return GeoStore.getItem(AppConstants.CRS_LONLAT).geoJson
+    return GeoStore.getItem(AppConstants.CRS_LONLAT).geoJson;
   },
 
   /**

@@ -1,5 +1,4 @@
 var AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants'),
   GeoJsonHint = require('geojsonhint'),
   CodeMirrorEditor = require('./CodeMirrorEditor.jsx');
 
@@ -52,7 +51,7 @@ var JsonEditInput = React.createClass({
     };
   },
 
-  componentWillReceiveProps: function(nextProps) {
+  componentWillReceiveProps: function(_) {
     // assume GeoJson passed in is valid :)
     this.setState({
       errors: null
@@ -65,7 +64,7 @@ var JsonEditInput = React.createClass({
   },
 
   onError: function(errors) {
-    this.setState({errors: errors})
+    this.setState({errors: errors});
   },
 
   render: function() {
@@ -80,8 +79,8 @@ var JsonEditInput = React.createClass({
     }
 
     if(this.state.errors) {
-      var errorMessage = errorsToSentence(this.state.errors),
-        errorClasses = "help error-message";
+      var errorMessage = errorsToSentence(this.state.errors);
+      errorClasses += " error-message";
 
       errorDisplay = <div ref="errors" className="error">
           <p className={errorClasses}>{errorMessage}</p>

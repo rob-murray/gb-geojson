@@ -1,0 +1,18 @@
+{
+  "camelcase": true,
+  "eqeqeq": true,
+  "eqnull": true,
+  "indent": 2,
+  "smarttabs": true,
+  "latedef": true,
+  "newcap": true,
+  "trailing": true,
+  "undef": true,
+  "unused": true,
+  "globals": {
+    "require": true,
+    "module": true,
+    "React": true,
+    "L": true
+  }
+}

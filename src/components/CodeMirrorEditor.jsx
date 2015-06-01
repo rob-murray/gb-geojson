@@ -2,7 +2,7 @@ var CodeMirror = require('codemirror');
 
 function parseable(input) {
   try {
-    JSON.parse(input)
+    JSON.parse(input);
   } catch(e) {
     return false;
   }

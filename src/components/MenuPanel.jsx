@@ -1,6 +1,5 @@
 var TabSwitcher = require("./TabSwitcher.jsx"),
-  AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants');
+  AppActions = require('../actions/AppActions');
 
 var MenuPanel = React.createClass({
   getInitialState: function() {
@@ -9,7 +8,7 @@ var MenuPanel = React.createClass({
     };
   },
 
-  switchTab: function(tabIndex) {
+  switchTab: function(_) {
     //this.setState({tabSelectedIndex: tabIndex});
     // the tab switching is outside of react atm :(
   },

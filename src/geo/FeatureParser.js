@@ -28,4 +28,4 @@ function parseGeoJson(geoJson) {
 
 module.exports = {
   features: parseGeoJson
-}
+};

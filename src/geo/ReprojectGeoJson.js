@@ -8,4 +8,4 @@ module.exports = {
   toWGS84: function(geoJson) {
     return gbifygeoson.toWGS84(geoJson);
   }
-}
+};

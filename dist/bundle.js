@@ -27688,7 +27688,7 @@ var App = React.createClass({displayName: "App",
   },
 
   _geoJsonForMapView: function() {
-    return GeoStore.getItem(AppConstants.CRS_LONLAT).geoJson
+    return GeoStore.getItem(AppConstants.CRS_LONLAT).geoJson;
   },
 
   /**
@@ -27706,7 +27706,7 @@ var CodeMirror = require('codemirror');
 
 function parseable(input) {
   try {
-    JSON.parse(input)
+    JSON.parse(input);
   } catch(e) {
     return false;
   }
@@ -27867,7 +27867,7 @@ var FeatureRow = React.createClass({displayName: "FeatureRow",
         React.createElement("span", {className: "title"}, title), 
         React.createElement("p", null, 
           Object.keys(feature.properties).map(function(k,i){
-            return React.createElement("span", {className: "feature-property", key: i}, k, ": ", feature.properties[k], React.createElement("br", null))
+            return React.createElement("span", {className: "feature-property", key: i}, k, ": ", feature.properties[k], React.createElement("br", null));
           })
         )
       )
@@ -27875,11 +27875,10 @@ var FeatureRow = React.createClass({displayName: "FeatureRow",
   }
 });
 
-module.exports = FeatureRow
+module.exports = FeatureRow;
 
 },{}],157:[function(require,module,exports){
 var AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants'),
   GeoJsonHint = require('geojsonhint'),
   CodeMirrorEditor = require('./CodeMirrorEditor.jsx');
 
@@ -27932,7 +27931,7 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
     };
   },
 
-  componentWillReceiveProps: function(nextProps) {
+  componentWillReceiveProps: function(_) {
     // assume GeoJson passed in is valid :)
     this.setState({
       errors: null
@@ -27945,7 +27944,7 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
   },
 
   onError: function(errors) {
-    this.setState({errors: errors})
+    this.setState({errors: errors});
   },
 
   render: function() {
@@ -27960,8 +27959,8 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
     }
 
     if(this.state.errors) {
-      var errorMessage = errorsToSentence(this.state.errors),
-        errorClasses = "help error-message";
+      var errorMessage = errorsToSentence(this.state.errors);
+      errorClasses += " error-message";
 
       errorDisplay = React.createElement("div", {ref: "errors", className: "error"}, 
           React.createElement("p", {className: errorClasses}, errorMessage)
@@ -27979,7 +27978,7 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
 
 module.exports = JsonEditInput;
 
-},{"../actions/AppActions":152,"../constants/AppConstants":162,"./CodeMirrorEditor.jsx":154,"geojsonhint":79}],158:[function(require,module,exports){
+},{"../actions/AppActions":152,"./CodeMirrorEditor.jsx":154,"geojsonhint":79}],158:[function(require,module,exports){
 var JsonEditInput = require('./JsonEditInput.jsx'),
   FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),
@@ -28004,7 +28003,7 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
   },
 
   render: function(){
-    var checkbox_value = this._inputReferenceSystemMapping();
+    var checkboxValue = this._inputReferenceSystemMapping();
 
     return (
       React.createElement("div", null, 
@@ -28020,7 +28019,7 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
             React.createElement("input", {
               ref: "inputReferenceSystem", 
               type: "checkbox", 
-              value: checkbox_value, 
+              value: checkboxValue, 
               onChange: this.onFormatChange, 
               className: "z-depth-1"}
             ), 
@@ -28035,7 +28034,7 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
   },
 
   _inputReferenceSystemMapping: function() {
-    this.props.inputReferenceSystem == AppConstants.CRS_BNG;
+    return this.props.inputReferenceSystem === AppConstants.CRS_BNG;
   }
 });
 
@@ -28043,8 +28042,7 @@ module.exports = ManualEditPanel;
 
 },{"../actions/AppActions":152,"../constants/AppConstants":162,"./FeatureList.jsx":155,"./JsonEditInput.jsx":157}],159:[function(require,module,exports){
 var TabSwitcher = require("./TabSwitcher.jsx"),
-  AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants');
+  AppActions = require('../actions/AppActions');
 
 var MenuPanel = React.createClass({displayName: "MenuPanel",
   getInitialState: function() {
@@ -28053,7 +28051,7 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
     };
   },
 
-  switchTab: function(tabIndex) {
+  switchTab: function(_) {
     //this.setState({tabSelectedIndex: tabIndex});
     // the tab switching is outside of react atm :(
   },
@@ -28100,7 +28098,7 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
 
 module.exports = MenuPanel;
 
-},{"../actions/AppActions":152,"../constants/AppConstants":162,"./TabSwitcher.jsx":161}],160:[function(require,module,exports){
+},{"../actions/AppActions":152,"./TabSwitcher.jsx":161}],160:[function(require,module,exports){
 var OSOpenSpace = require('os-leaflet'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),
@@ -28121,21 +28119,21 @@ function transformLayerToGeoJson(layer) {
   return GeoUtils.featureCollection(features);
 }
 
-function transformGeoJsonToLayers(geojson, editableLayer) {
-  editableLayer.clearLayers();
-  L.geoJson(geojson, {}).eachLayer(function add(l) {
-    addPopupToLayer(l)
-    l.addTo(editableLayer);
-  });
-}
-
 function addPopupToLayer(layer) {
-  content = JSON.stringify(layer.toGeoJSON().properties);
+  var content = JSON.stringify(layer.toGeoJSON().properties);
 
   layer.bindPopup(L.popup({
     maxWidth: 600,
     maxHeight: 450,
   }, layer).setContent(content));
+}
+
+function transformGeoJsonToLayers(geojson, editableLayer) {
+  editableLayer.clearLayers();
+  L.geoJson(geojson, {}).eachLayer(function add(l) {
+    addPopupToLayer(l);
+    l.addTo(editableLayer);
+  });
 }
 
 var OSMap = React.createClass({displayName: "OSMap",
@@ -28318,7 +28316,7 @@ function parseGeoJson(geoJson) {
 
 module.exports = {
   features: parseGeoJson
-}
+};
 
 },{}],165:[function(require,module,exports){
 var gbifygeoson = require("gbify-geojson");
@@ -28331,7 +28329,7 @@ module.exports = {
   toWGS84: function(geoJson) {
     return gbifygeoson.toWGS84(geoJson);
   }
-}
+};
 
 },{"gbify-geojson":9}],166:[function(require,module,exports){
 module.exports = {
@@ -28341,7 +28339,7 @@ module.exports = {
         features: features
     };
   }
-}
+};
 
 },{}],167:[function(require,module,exports){
 var AppDispatcher = require('../dispatcher/AppDispatcher'),
@@ -28407,7 +28405,7 @@ function getData(requestedCrs) {
  * Store the current input Reference System.
  */
 function setInputCrs(inputReferenceSystem) {
-  _inputCrs = inputReferenceSystem
+  _inputCrs = inputReferenceSystem;
 }
 
 /**
@@ -28437,7 +28435,7 @@ var AppStore = assign({}, EventEmitter.prototype, {
    */
   getItem: function(requestedCrs) {
     if(!requestedCrs) {
-      requestedCrs = _inputCrs
+      requestedCrs = _inputCrs;
     }
 
     return {
@@ -28474,10 +28472,10 @@ AppDispatcher.register(function(action) {
       data = action.data;
       inputReferenceSystem = action.inputReferenceSystem;
       if(!inputReferenceSystem) {
-        inputReferenceSystem = _inputCrs
+        inputReferenceSystem = _inputCrs;
       }
       if (data !== null) {
-        setData(data, inputReferenceSystem);
+        create(data, inputReferenceSystem);
         AppStore.emitChange();
       }
       break;
@@ -28504,7 +28502,7 @@ AppDispatcher.register(function(action) {
   }
 });
 
-setData(emptyGeoJson, initialCrs);
+create(emptyGeoJson, initialCrs);
 setInputCrs(initialCrs);
 
 module.exports = AppStore;
