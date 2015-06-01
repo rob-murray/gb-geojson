@@ -1,0 +1,14 @@
+/* materialize-overrides.scss
+ * customise css framework
+ */
+@import 'variables';
+
+.switch label input[type=checkbox]:checked + .lever {
+  background-color: $accent-color;
+}
+.switch label input[type=checkbox]:checked + .lever:after {
+  background-color: $accent-color;
+}
+.tabs .indicator {
+  background-color: $accent-color;
+}
