@@ -4,7 +4,7 @@ View, create, edit, transform GeoJSON map data in British National Grid referenc
 
 [GeoJSON](http://geojson.org/) is a simple data structure based on JavaScript Object Notation (JSON) that can be used to describe geographic features. With [gb-geojson](http://rob-murray.github.io/gb-geojson/) you can upload existing GeoJSON, create new features or edit existing objects in either WGS84 Longitude and Latitude or British National Grid Eastings and Northings.
 
-![Editing a GeoJSON Feature and reprojecting coordinates to OSGB36](gb-geo-edit?raw=true "Editing a GeoJSON Feature and reprojecting coordinates to OSGB36")
+![Editing a GeoJSON Feature and reprojecting coordinates to OSGB36](gb-geo-edit.gif?raw=true "Editing a GeoJSON Feature and reprojecting coordinates to OSGB36")
 
 **gb-geojson** is a tool that allows you to view, create and edit GeoJSON in both `ESPG:4326` aka WGS84 and OS National Grid coordinate reference systems. We reproject between these reference systems on the fly so you can edit in either system and interchange as easily as possible, this is done with accuracy that is acceptable for most editing.
 
