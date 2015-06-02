@@ -27592,6 +27592,8 @@ arguments[4][77][0].apply(exports,arguments)
 }));
 
 },{"leaflet":85,"proj4":119}],152:[function(require,module,exports){
+"use strict";
+
 var AppDispatcher = require('../dispatcher/AppDispatcher'),
   AppConstants = require('../constants/AppConstants');
 
@@ -27646,6 +27648,8 @@ var AppActions = {
 module.exports = AppActions;
 
 },{"../constants/AppConstants":162,"../dispatcher/AppDispatcher":163}],153:[function(require,module,exports){
+"use strict";
+
 var OSMap = require('./OSMap.jsx'),
   MenuPanel = require('./MenuPanel.jsx'),
   ManualEditPanel = require('./ManualEditPanel.jsx'),
@@ -27701,7 +27705,9 @@ var App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"../constants/AppConstants":162,"../stores/GeoStore":167,"./ManualEditPanel.jsx":158,"./MenuPanel.jsx":159,"./OSMap.jsx":160}],154:[function(require,module,exports){
+},{"../constants/AppConstants":162,"../stores/GeoStore":168,"./ManualEditPanel.jsx":158,"./MenuPanel.jsx":159,"./OSMap.jsx":160}],154:[function(require,module,exports){
+"use strict";
+
 var CodeMirror = require('codemirror');
 
 function parseable(input) {
@@ -27795,6 +27801,8 @@ var CodeMirrorEditor = React.createClass({displayName: "CodeMirrorEditor",
 module.exports = CodeMirrorEditor;
 
 },{"codemirror":5}],155:[function(require,module,exports){
+"use strict";
+
 var FeatureRow = require('./FeatureRow.jsx'),
   FeatureParser = require('../geo/FeatureParser');
 
@@ -27824,7 +27832,8 @@ var FeatureList = React.createClass({displayName: "FeatureList",
 
 module.exports = FeatureList;
 
-},{"../geo/FeatureParser":164,"./FeatureRow.jsx":156}],156:[function(require,module,exports){
+},{"../geo/FeatureParser":165,"./FeatureRow.jsx":156}],156:[function(require,module,exports){
+"use strict";
 
 function iconClassesForFeatureType(featureType) {
   var classes = 'circle large';
@@ -27878,6 +27887,8 @@ var FeatureRow = React.createClass({displayName: "FeatureRow",
 module.exports = FeatureRow;
 
 },{}],157:[function(require,module,exports){
+"use strict";
+
 var AppActions = require('../actions/AppActions'),
   GeoJsonHint = require('geojsonhint'),
   CodeMirrorEditor = require('./CodeMirrorEditor.jsx');
@@ -27979,6 +27990,8 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
 module.exports = JsonEditInput;
 
 },{"../actions/AppActions":152,"./CodeMirrorEditor.jsx":154,"geojsonhint":79}],158:[function(require,module,exports){
+"use strict";
+
 var JsonEditInput = require('./JsonEditInput.jsx'),
   FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),
@@ -28041,6 +28054,8 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
 module.exports = ManualEditPanel;
 
 },{"../actions/AppActions":152,"../constants/AppConstants":162,"./FeatureList.jsx":155,"./JsonEditInput.jsx":157}],159:[function(require,module,exports){
+"use strict";
+
 var TabSwitcher = require("./TabSwitcher.jsx"),
   AppActions = require('../actions/AppActions');
 
@@ -28099,6 +28114,8 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
 module.exports = MenuPanel;
 
 },{"../actions/AppActions":152,"./TabSwitcher.jsx":161}],160:[function(require,module,exports){
+"use strict";
+
 var OSOpenSpace = require('os-leaflet'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),
@@ -28239,7 +28256,9 @@ var OSMap = React.createClass({displayName: "OSMap",
 
 module.exports = OSMap;
 
-},{"../actions/AppActions":152,"../constants/AppConstants":162,"../geo/Utils":166,"leaflet-draw":82,"os-leaflet":84}],161:[function(require,module,exports){
+},{"../actions/AppActions":152,"../constants/AppConstants":162,"../geo/Utils":167,"leaflet-draw":82,"os-leaflet":84}],161:[function(require,module,exports){
+"use strict";
+
 var EDIT_TAB = 0,
   FEATURE_LIST_TAB = 1;
 
@@ -28269,6 +28288,8 @@ var TabSwitcher = React.createClass({displayName: "TabSwitcher",
 module.exports = TabSwitcher;
 
 },{}],162:[function(require,module,exports){
+"use strict";
+
 var keyMirror = require('keymirror');
 
 module.exports = keyMirror({
@@ -28281,11 +28302,29 @@ module.exports = keyMirror({
 });
 
 },{"keymirror":81}],163:[function(require,module,exports){
+"use strict";
+
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
 
 },{"flux":6}],164:[function(require,module,exports){
+module.exports = function(run) {
+  if (!run) {
+    return;
+  }
+
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-6817780-5', 'auto');
+  ga('send', 'pageview');
+};
+
+},{}],165:[function(require,module,exports){
+"use strict";
 
 function parseFeature(feature) {
   return {
@@ -28318,20 +28357,24 @@ module.exports = {
   features: parseGeoJson
 };
 
-},{}],165:[function(require,module,exports){
-var gbifygeoson = require("gbify-geojson");
+},{}],166:[function(require,module,exports){
+"use strict";
+
+var gbify = require("gbify-geojson");
 
 module.exports = {
   toOSGB36: function(geoJson) {
-    return gbifygeoson.toOSGB36(geoJson);
+    return gbify.toOSGB36(geoJson);
   },
 
   toWGS84: function(geoJson) {
-    return gbifygeoson.toWGS84(geoJson);
+    return gbify.toWGS84(geoJson);
   }
 };
 
-},{"gbify-geojson":9}],166:[function(require,module,exports){
+},{"gbify-geojson":9}],167:[function(require,module,exports){
+"use strict";
+
 module.exports = {
   featureCollection: function (features) {
     return {
@@ -28341,7 +28384,9 @@ module.exports = {
   }
 };
 
-},{}],167:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
+"use strict";
+
 var AppDispatcher = require('../dispatcher/AppDispatcher'),
   EventEmitter = require('events').EventEmitter,
   AppConstants = require('../constants/AppConstants'),
@@ -28507,12 +28552,18 @@ setInputCrs(initialCrs);
 
 module.exports = AppStore;
 
-},{"../constants/AppConstants":162,"../dispatcher/AppDispatcher":163,"../geo/ReprojectGeoJson":165,"../geo/Utils":166,"events":2,"object-assign":83}],168:[function(require,module,exports){
-var App = require('./components/App.jsx');
+},{"../constants/AppConstants":162,"../dispatcher/AppDispatcher":163,"../geo/ReprojectGeoJson":166,"../geo/Utils":167,"events":2,"object-assign":83}],169:[function(require,module,exports){
+(function () {
+  "use strict";
+  var App = require('./components/App.jsx'),
+    isProduction = "development" === 'production';
 
-React.render(
-  React.createElement(App, null),
-  document.getElementById('app')
-);
+  React.render(
+    React.createElement(App, null),
+    document.getElementById('app')
+  );
 
-},{"./components/App.jsx":153}]},{},[168]);
+  require('./ga')(isProduction);
+})();
+
+},{"./components/App.jsx":153,"./ga":164}]},{},[169]);

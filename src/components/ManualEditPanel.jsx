@@ -1,3 +1,5 @@
+"use strict";
+
 var JsonEditInput = require('./JsonEditInput.jsx'),
   FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),

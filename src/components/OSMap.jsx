@@ -1,3 +1,5 @@
+"use strict";
+
 var OSOpenSpace = require('os-leaflet'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),

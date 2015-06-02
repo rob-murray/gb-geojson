@@ -2,11 +2,14 @@
 
 View, create, edit, transform GeoJSON map data in British National Grid reference system.
 
-[GeoJSON](http://geojson.org/) is a simple data structure based on JavaScript Object Notation (JSON) that can be used to describe geographic features.
+[GeoJSON](http://geojson.org/) is a simple data structure based on JavaScript Object Notation (JSON) that can be used to describe geographic features. With [gb-geojson](http://rob-murray.github.io/gb-geojson/) you can upload existing GeoJSON, create new features or edit existing objects in either WGS84 Longitude and Latitude or British National Grid Eastings and Northings.
+
+> image here
 
 **gb-geojson** is a tool that allows you to view, create and edit GeoJSON in both `ESPG:4326` aka WGS84 and OS National Grid coordinate reference systems. We reproject between these reference systems on the fly so you can edit in either system and interchange as easily as possible, this is done with accuracy that is acceptable for most editing.
 
-> image here
+[gb-geojson](http://rob-murray.github.io/gb-geojson/)
+
 
 ### Features
 
@@ -15,6 +18,7 @@ Feature list:
 * View, create, edit GeoJSON in WGS84 and OS National Grid coordinate reference systems
 * Reproject on the fly
 * Uses Ordnance Survey backdrop mapping
+
 
 ### What is the difference between Lon, Lat and OS National Grid?
 
@@ -40,18 +44,10 @@ Checkout the `data/` directory for some example GeoJSON.
 
 #### Run local webserver
 
-To aid local development I recommend running a small webserver to serve static content.
+To aid local development there is a small webserver to serve static content.
 
 ```bash
 $ node server
-```
-
-#### Build CSS
-
-Build the CSS output `styles.css`.
-
-```
-$ sass --sourcemap=none --style compressed css/styles.scss:dist/styles.css
 ```
 
 #### watchify
@@ -68,6 +64,14 @@ To build an unminified `browserified` bundle:
 
 ```
 $ npm run build-dev
+```
+
+#### Build CSS
+
+Build the CSS output `styles.css`.
+
+```
+$ sass --sourcemap=none --style compressed css/styles.scss:dist/styles.css
 ```
 
 #### Production build
@@ -101,6 +105,11 @@ Some of the many other libraries used are:
 
 If you dont want to use this tool then a simple alternative is to locally reproject your GeoJSON dataset with something such as [GDAL](http://www.gdal.org/ogr2ogr.html) or [reproject js library](https://github.com/perliedman/reproject) and then import into [geojson.io](https://github.com/mapbox/geojson.io).
 
+GDAL can do this also with something like this to reproject OSGB36 > WGS84, then upload the resultant GeoJSON somewhere.
+
+```bash
+$ ogr2ogr -s_srs EPSG:27700 -f "GeoJSON" output.json input.json -t_srs EPSG:4326
+```
 
 ## License
 

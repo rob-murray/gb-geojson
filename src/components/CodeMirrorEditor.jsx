@@ -1,3 +1,5 @@
+"use strict";
+
 var CodeMirror = require('codemirror');
 
 function parseable(input) {

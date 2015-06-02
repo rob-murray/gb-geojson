@@ -28,8 +28,8 @@
   "homepage": "https://github.com/rob-murray/gb-geojson",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch-js": "watchify -e src/main.js -o dist/bundle.js",
-    "build-dev": "browserify -e src/main.js -o dist/bundle.js",
+    "watch-js": "NODE_ENV='development' watchify -e src/main.js -o dist/bundle.js",
+    "build-dev": "NODE_ENV='development' browserify -e src/main.js -o dist/bundle.js",
     "build": "NODE_ENV='production' browserify -e src/main.js | uglifyjs -cm > dist/bundle.js"
   },
   "browserify": {
