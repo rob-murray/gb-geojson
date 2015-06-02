@@ -1,3 +1,5 @@
+"use strict";
+
 var AppActions = require('../actions/AppActions'),
   GeoJsonHint = require('geojsonhint'),
   CodeMirrorEditor = require('./CodeMirrorEditor.jsx');

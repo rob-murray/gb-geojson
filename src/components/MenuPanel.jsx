@@ -1,3 +1,5 @@
+"use strict";
+
 var TabSwitcher = require("./TabSwitcher.jsx"),
   AppActions = require('../actions/AppActions');
 

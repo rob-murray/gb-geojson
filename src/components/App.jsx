@@ -1,3 +1,5 @@
+"use strict";
+
 var OSMap = require('./OSMap.jsx'),
   MenuPanel = require('./MenuPanel.jsx'),
   ManualEditPanel = require('./ManualEditPanel.jsx'),

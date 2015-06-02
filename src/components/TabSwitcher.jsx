@@ -1,3 +1,5 @@
+"use strict";
+
 var EDIT_TAB = 0,
   FEATURE_LIST_TAB = 1;
 

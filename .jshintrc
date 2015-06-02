@@ -9,6 +9,8 @@
   "trailing": true,
   "undef": true,
   "unused": true,
+  "strict": true,
+  "node": true,
   "globals": {
     "require": true,
     "module": true,
