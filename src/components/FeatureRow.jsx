@@ -1,3 +1,4 @@
+"use strict";
 
 function iconClassesForFeatureType(featureType) {
   var classes = 'circle large';

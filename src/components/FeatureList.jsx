@@ -1,3 +1,5 @@
+"use strict";
+
 var FeatureRow = require('./FeatureRow.jsx'),
   FeatureParser = require('../geo/FeatureParser');
 
