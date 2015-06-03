@@ -93,7 +93,8 @@ var OSMap = React.createClass({
       maxZoom: L.OSOpenSpace.RESOLUTIONS.length - 1,
       zoomControl: false
     });
-    map.addLayer(L.tileLayer.OSOpenSpace("EC9EDE7DAD732ABAE0430C6CA40AB812", {}));
+
+    map.addLayer(L.tileLayer.OSOpenSpace('15042E2CC4297A0EE0530B6CA40A2E10', {}));
     new L.Control.Zoom({ position: MAP_CONTROL_POSITION }).addTo(map);
     this.editableLayer = L.featureGroup().addTo(map);
     return map;
