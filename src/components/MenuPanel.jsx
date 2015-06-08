@@ -17,7 +17,7 @@ var MenuPanel = React.createClass({
 
   render: function(){
     return (
-      <div id="menu-panel" className="map-panel card grey lighten-4 z-depth-2">
+      <div id="menu-panel" className="map-panel grey lighten-4 z-depth-2">
         <ul id="dropdown-menu" className="dropdown-content">
           <li><a href="https://github.com/rob-murray/gb-geojson" title="What is this all about?">About</a></li>
         </ul>
@@ -41,7 +41,7 @@ var MenuPanel = React.createClass({
             </ul>
           </div>
         </nav>
-        <div className="card-content grey-text darken-3-text">
+        <div className="panel-container grey-text darken-3-text">
           <TabSwitcher onTabClick={this.switchTab} />
           { this.props.children }
         </div>

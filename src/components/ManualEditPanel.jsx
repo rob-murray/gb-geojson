@@ -27,11 +27,11 @@ var ManualEditPanel = React.createClass({
     var checkboxValue = this._inputReferenceSystemMapping();
 
     return (
-      <div>
-        <div id="edit" className="col s12 active">
+      <div id="tabContent">
+        <div id="edit" className="tab-item col s12 active">
           <JsonEditInput geoJson={this.props.geoJson} />
         </div>
-        <div id="list" className="col s12">
+        <div id="list" className="tab-item col s12">
           <FeatureList geoJson={this.props.geoJson} />
         </div>
         <div className="switch">
