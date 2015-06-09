@@ -7,7 +7,8 @@ var OSOpenSpace = require('os-leaflet'),
   LeafletDraw = require('leaflet-draw');
 
 L.Icon.Default.imagePath = 'http://cdn.leafletjs.com/leaflet-0.7.3/images';
-var MAP_CONTROL_POSITION = 'topright';
+var MAP_CONTROL_POSITION = 'topright',
+  MENU_PANEL_WIDTH = 500;
 
 function transformLayerToGeoJson(layer) {
   var features = [];
@@ -63,7 +64,11 @@ var OSMap = React.createClass({
     transformGeoJsonToLayers(nextProps.geoJson, this.editableLayer);
 
     if(this.editableLayer.getBounds().isValid()) {
-      this.map.fitBounds(this.editableLayer.getBounds());
+      this.map.fitBounds(this.editableLayer.getBounds(),
+        {
+          paddingTopLeft: [MENU_PANEL_WIDTH, 0]
+        }
+      );
     }
   },
 
