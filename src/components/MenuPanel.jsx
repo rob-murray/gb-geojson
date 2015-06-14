@@ -24,7 +24,7 @@ var MenuPanel = React.createClass({
         <nav>
           <div className="nav-wrapper pink">
             <a href="#" className="brand-logo">GB-GeoJson</a>
-            <ul className="right hide-on-med-and-down">
+            <ul className="right">
               <li>
                 <a
                   onClick={this._clearMap}
@@ -34,7 +34,7 @@ var MenuPanel = React.createClass({
                 </a>
               </li>
               <li>
-                <a href="#!" title="More options" className="dropdown-button" data-activates="dropdown-menu">
+                <a href="#" title="More options" className="dropdown-button" data-activates="dropdown-menu">
                   <i className="mdi-navigation-more-vert right"></i>
                 </a>
               </li>
