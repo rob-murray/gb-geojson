@@ -15,35 +15,62 @@
   }
 
   .panel-container {
-    height: 93%;
+    position: absolute;
+    top: 64px;
+    bottom: 0;
+    left: 0;
+    right: 0;
     padding: 20px;
   }
 
   #tabContent {
-    height: 95%;
-  }
-
-  #jsonContainer {
-    height: 95%;
-    min-height: 95%;
-    overflow-y: hidden;
+    position: absolute;
+    top: 66px;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
   }
 
   .tab-item {
-    height: 95%; /* compensate for switch */
-    max-height: 95%;
-    overflow-y: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  #jsonContainer {
+    position: absolute;
+    top: 0;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    overflow-y: hidden;
   }
 
   .editor-container {
-    height: 100%;
-    margin-bottom: 5px;
+    position: absolute;
+    top: 0;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    overflow-y: hidden;
     border-bottom: 1px solid $accent-color !important;
     box-shadow: 0 1px 0 0 $accent-color !important;
   }
 
   .with-error {
-    height: 90% !important;
+    bottom: 85px;
+  }
+
+  .switch {
+    height: 40px;
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px;
   }
 
   /* reduce spacing between link & i */

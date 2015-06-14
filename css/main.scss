@@ -24,9 +24,11 @@ html, body {
 
 /* errors */
 #editErrors {
-  margin-bottom: 10px;
-  padding-bottom: 3px;
-  display: block;
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  height: 80px;
 }
 
 .error {
