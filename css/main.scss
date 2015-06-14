@@ -23,9 +23,13 @@ html, body {
 }
 
 /* errors */
-.error {
+#editErrors {
   margin-bottom: 10px;
   padding-bottom: 3px;
+  display: block;
+}
+
+.error {
   color: $error-highlight-color;
 }
 

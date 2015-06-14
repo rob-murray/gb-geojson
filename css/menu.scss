@@ -25,6 +25,8 @@
 
   #jsonContainer {
     height: 95%;
+    min-height: 95%;
+    overflow-y: hidden;
   }
 
   .tab-item {
@@ -38,6 +40,10 @@
     margin-bottom: 5px;
     border-bottom: 1px solid $accent-color !important;
     box-shadow: 0 1px 0 0 $accent-color !important;
+  }
+
+  .with-error {
+    height: 90% !important;
   }
 
   /* reduce spacing between link & i */

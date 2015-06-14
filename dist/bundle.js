@@ -9741,6 +9741,12 @@ module.exports = invariant;
   function traverseGeoJson(geoJson, processLeafNode) {
     var reprojected = clone(geoJson);
 
+    // Whilst the crs prop is in the GeoJson spec its a bit of a hassle to work out
+    // what format the ref sys is in so play safe and just remove it if present.
+    if (reprojected.crs) {
+      delete reprojected.crs;
+    }
+
     if (geoJson.type === 'Feature') {
       //console.log([JSON.stringify(geoJson), 'is a Feature']);
       reprojected.geometry = traverseGeoJson(geoJson.geometry, processLeafNode);
@@ -27793,8 +27799,12 @@ var CodeMirrorEditor = React.createClass({displayName: "CodeMirrorEditor",
       onChange: this.props.onChange,
       className: 'editor'
     });
+    var editorClasses = "editor-container";
+    if (this.props.hasError) {
+      editorClasses += " with-error";
+    }
 
-    return React.createElement('div', {className: 'editor-container'}, editor);
+    return React.createElement('div', {className: editorClasses}, editor);
   }
 });
 
@@ -27960,6 +27970,7 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
 
   render: function() {
     var errorClasses = 'help',
+      hasError = false,
       editableJsonContent,
       errorDisplay;
 
@@ -27972,15 +27983,16 @@ var JsonEditInput = React.createClass({displayName: "JsonEditInput",
     if(this.state.errors) {
       var errorMessage = errorsToSentence(this.state.errors);
       errorClasses += " error-message";
+      hasError = true;
 
-      errorDisplay = React.createElement("div", {ref: "errors", className: "error"}, 
+      errorDisplay = React.createElement("div", {id: "editErrors", ref: "errors", className: "error"}, 
           React.createElement("p", {className: errorClasses}, errorMessage)
         );
     }
 
     return (
       React.createElement("div", {id: "jsonContainer", className: "input-field"}, 
-        React.createElement(CodeMirrorEditor, {value: editableJsonContent, onChange: this.onInputChange}), 
+        React.createElement(CodeMirrorEditor, {value: editableJsonContent, onChange: this.onInputChange, hasError: hasError}), 
         errorDisplay
       )
     );
@@ -28019,11 +28031,11 @@ var ManualEditPanel = React.createClass({displayName: "ManualEditPanel",
     var checkboxValue = this._inputReferenceSystemMapping();
 
     return (
-      React.createElement("div", null, 
-        React.createElement("div", {id: "edit", className: "col s12 active"}, 
+      React.createElement("div", {id: "tabContent"}, 
+        React.createElement("div", {id: "edit", className: "tab-item col s12 active"}, 
           React.createElement(JsonEditInput, {geoJson: this.props.geoJson})
         ), 
-        React.createElement("div", {id: "list", className: "col s12"}, 
+        React.createElement("div", {id: "list", className: "tab-item col s12"}, 
           React.createElement(FeatureList, {geoJson: this.props.geoJson})
         ), 
         React.createElement("div", {className: "switch"}, 
@@ -28073,7 +28085,7 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
 
   render: function(){
     return (
-      React.createElement("div", {id: "menu-panel", className: "map-panel card grey lighten-4 z-depth-2"}, 
+      React.createElement("div", {id: "menu-panel", className: "map-panel grey lighten-4 z-depth-2"}, 
         React.createElement("ul", {id: "dropdown-menu", className: "dropdown-content"}, 
           React.createElement("li", null, React.createElement("a", {href: "https://github.com/rob-murray/gb-geojson", title: "What is this all about?"}, "About"))
         ), 
@@ -28097,7 +28109,7 @@ var MenuPanel = React.createClass({displayName: "MenuPanel",
             )
           )
         ), 
-        React.createElement("div", {className: "card-content grey-text darken-3-text"}, 
+        React.createElement("div", {className: "panel-container grey-text darken-3-text"}, 
           React.createElement(TabSwitcher, {onTabClick: this.switchTab}), 
            this.props.children
         )
@@ -28123,7 +28135,8 @@ var OSOpenSpace = require('os-leaflet'),
   LeafletDraw = require('leaflet-draw');
 
 L.Icon.Default.imagePath = 'http://cdn.leafletjs.com/leaflet-0.7.3/images';
-var MAP_CONTROL_POSITION = 'topright';
+var MAP_CONTROL_POSITION = 'topright',
+  MENU_PANEL_WIDTH = 500;
 
 function transformLayerToGeoJson(layer) {
   var features = [];
@@ -28179,7 +28192,11 @@ var OSMap = React.createClass({displayName: "OSMap",
     transformGeoJsonToLayers(nextProps.geoJson, this.editableLayer);
 
     if(this.editableLayer.getBounds().isValid()) {
-      this.map.fitBounds(this.editableLayer.getBounds());
+      this.map.fitBounds(this.editableLayer.getBounds(),
+        {
+          paddingTopLeft: [MENU_PANEL_WIDTH, 0]
+        }
+      );
     }
   },
 
