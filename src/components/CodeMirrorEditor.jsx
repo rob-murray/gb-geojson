@@ -85,8 +85,12 @@ var CodeMirrorEditor = React.createClass({
       onChange: this.props.onChange,
       className: 'editor'
     });
+    var editorClasses = "editor-container";
+    if (this.props.hasError) {
+      editorClasses += " with-error";
+    }
 
-    return React.createElement('div', {className: 'editor-container'}, editor);
+    return React.createElement('div', {className: editorClasses}, editor);
   }
 });
 

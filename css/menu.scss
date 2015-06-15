@@ -8,32 +8,79 @@
   left: 15px;
   position: fixed;
   margin: 0;
-  max-height: 90%;
-  height: auto;
-
-  .card-content {
-    height: 100%;
-  }
+  bottom: 15px;
 
   .brand-logo {
     margin-left: 10px;
   }
 
+  .panel-container {
+    position: absolute;
+    top: 64px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+  }
+
+  #tabContent {
+    position: absolute;
+    top: 66px;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+  }
+
+  .tab-item {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
   #jsonContainer {
-    position: relative;
-    height: auto;
+    position: absolute;
+    top: 0;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    overflow-y: hidden;
   }
 
   .editor-container {
-    position: relative;
-    height: 100%;
-    margin-bottom: 5px;
+    position: absolute;
+    top: 0;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    overflow-y: hidden;
     border-bottom: 1px solid $accent-color !important;
     box-shadow: 0 1px 0 0 $accent-color !important;
+  }
+
+  .with-error {
+    bottom: 85px;
+  }
+
+  .switch {
+    height: 40px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: 10px;
   }
 
   /* reduce spacing between link & i */
   .switch i {
     margin-left: 3px;
   }
+}
+
+.pinned {
+  height: 64px;
+}
+.hideme {
+  display: none;
 }

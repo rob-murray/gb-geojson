@@ -27,11 +27,11 @@ var ManualEditPanel = React.createClass({
     var checkboxValue = this._inputReferenceSystemMapping();
 
     return (
-      <div>
-        <div id="edit" className="col s12 active">
+      <div id="tabContent">
+        <div id="edit" className="tab-item col s12 active">
           <JsonEditInput geoJson={this.props.geoJson} />
         </div>
-        <div id="list" className="col s12">
+        <div id="list" className="tab-item col s12">
           <FeatureList geoJson={this.props.geoJson} />
         </div>
         <div className="switch">
@@ -47,7 +47,7 @@ var ManualEditPanel = React.createClass({
             <span className="lever"></span>
             OS National Grid
           </label>
-          <i className="mdi-action-exit-to-app tiny right"></i>
+          <i className="mdi-action-open-in-new tiny right"></i>
           <a href={CRS_LINK} title="Explain the difference between coordinate reference systems" className="pink-text right">What is this?</a>
         </div>
       </div>

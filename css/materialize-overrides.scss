@@ -6,9 +6,16 @@
 .switch label input[type=checkbox]:checked + .lever {
   background-color: $accent-color;
 }
+
 .switch label input[type=checkbox]:checked + .lever:after {
   background-color: $accent-color;
 }
+
 .tabs .indicator {
   background-color: $accent-color;
+}
+
+/* fix collection-item used in list */
+.collection-item {
+  height: auto;
 }

@@ -44,7 +44,7 @@
     "envify": "^3.4.0",
     "express": "^4.12.4",
     "flux": "^2.0.3",
-    "gbify-geojson": "^0.1.0",
+    "gbify-geojson": "^0.1.1",
     "geojsonhint": "^1.0.0",
     "jsxhint": "^0.15.0",
     "keymirror": "^0.1.1",

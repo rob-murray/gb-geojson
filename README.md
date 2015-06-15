@@ -1,19 +1,15 @@
-# gb-geojson
+# [gb-geojson](http://rob-murray.github.io/gb-geojson/)
 
 View, create, edit, transform GeoJSON map data in British National Grid reference system.
 
 [GeoJSON](http://geojson.org/) is a simple data structure based on JavaScript Object Notation (JSON) that can be used to describe geographic features. With [gb-geojson](http://rob-murray.github.io/gb-geojson/) you can upload existing GeoJSON, create new features or edit existing objects in either WGS84 Longitude and Latitude or British National Grid Eastings and Northings.
 
-> image here
+![Editing a GeoJSON Feature and reprojecting coordinates to OSGB36](gb-geo-edit.gif?raw=true "Editing a GeoJSON Feature and reprojecting coordinates to OSGB36")
 
 **gb-geojson** is a tool that allows you to view, create and edit GeoJSON in both `ESPG:4326` aka WGS84 and OS National Grid coordinate reference systems. We reproject between these reference systems on the fly so you can edit in either system and interchange as easily as possible, this is done with accuracy that is acceptable for most editing.
 
-[gb-geojson](http://rob-murray.github.io/gb-geojson/)
-
 
 ### Features
-
-Feature list:
 
 * View, create, edit GeoJSON in WGS84 and OS National Grid coordinate reference systems
 * Reproject on the fly
@@ -28,7 +24,9 @@ The GeoJSON geospatial data is always projected on the map using the Spherical M
 
 Note that the [GeoJSON spec](http://geojson.org/geojson-spec.html#positions) states that coordinates should be in the form `X, Y` for whichever projected reference system used.
 
-The [GeoJSON spec](http://geojson.org/geojson-spec.html#coordinate-reference-system-objects) lists the `CRS` property but this is ignored by **gb-geojson** at present due to ambiguity and to maintain tool simplicity.
+The [GeoJSON spec](http://geojson.org/geojson-spec.html#coordinate-reference-system-objects) lists the `CRS` property but this is ignored by **gb-geojson** at present due to format ambiguity and to maintain tool simplicity.
+
+The reprojection is done by the [gbify-geojson](https://github.com/rob-murray/gbify-geojson) library using Proj4js.
 
 
 ### Example data
@@ -90,9 +88,9 @@ Please use the GitHub pull-request mechanism to submit contributions.
 
 ## Credits
 
-This stands on the shoulders by reusing many excellent libraries and is inspired by the excellent [geojson.io](https://github.com/mapbox/geojson.io).
+This stands on the shoulders by reusing many excellent libraries and is inspired by the great [geojson.io](https://github.com/mapbox/geojson.io).
 
-Some of the many other libraries used are:
+Some of the other libraries used are:
 
 * [Leaflet](https://github.com/Leaflet/)
 * [Leaflet-draw](https://github.com/Leaflet/Leaflet.draw)

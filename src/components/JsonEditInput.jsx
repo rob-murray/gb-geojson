@@ -71,6 +71,7 @@ var JsonEditInput = React.createClass({
 
   render: function() {
     var errorClasses = 'help',
+      hasError = false,
       editableJsonContent,
       errorDisplay;
 
@@ -83,15 +84,16 @@ var JsonEditInput = React.createClass({
     if(this.state.errors) {
       var errorMessage = errorsToSentence(this.state.errors);
       errorClasses += " error-message";
+      hasError = true;
 
-      errorDisplay = <div ref="errors" className="error">
+      errorDisplay = <div id="editErrors" ref="errors" className="error">
           <p className={errorClasses}>{errorMessage}</p>
         </div>;
     }
 
     return (
       <div id='jsonContainer' className='input-field'>
-        <CodeMirrorEditor value={editableJsonContent} onChange={this.onInputChange} />
+        <CodeMirrorEditor value={editableJsonContent} onChange={this.onInputChange} hasError={hasError} />
         {errorDisplay}
       </div>
     );

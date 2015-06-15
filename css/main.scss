@@ -3,6 +3,8 @@
 
 html, body {
   height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 #app, .map {
@@ -10,17 +12,26 @@ html, body {
   top: 0;
   bottom: 0;
   width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 .map-panel {
   width: 300px;
   z-index: 1005;
+  margin: 0;
 }
 
 /* errors */
+#editErrors {
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  height: 80px;
+}
+
 .error {
-  margin-bottom: 10px;
-  padding-bottom: 3px;
   color: $error-highlight-color;
 }
 
