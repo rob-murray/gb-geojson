@@ -48,6 +48,15 @@
     overflow-y: hidden;
   }
 
+  #featureListContainer {
+    position: absolute;
+    top: 15px;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    overflow-y: auto;
+  }
+
   .editor-container {
     position: absolute;
     top: 0;

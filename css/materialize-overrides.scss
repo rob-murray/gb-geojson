@@ -15,7 +15,11 @@
   background-color: $accent-color;
 }
 
-/* fix collection-item used in list */
+/* fix collection{-item} used in list */
+.collection {
+  margin: 0 !important;
+}
+
 .collection-item {
-  height: auto;
+  height: auto !important;
 }
