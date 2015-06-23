@@ -18,11 +18,13 @@ var FeatureList = React.createClass({
     var features = FeatureParser.features(this.props.geoJson);
 
     return (
-      <ul className="collection">
-        {features.map(function(f, i) {
-          return <FeatureRow key={i} feature={f} />;
-        })}
-      </ul>
+      <div id="featureListContainer">
+        <ul className="collection">
+          {features.map(function(f, i) {
+            return <FeatureRow key={i} feature={f} />;
+          })}
+        </ul>
+      </div>
     );
   }
 });
