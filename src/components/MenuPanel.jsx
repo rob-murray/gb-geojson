@@ -54,11 +54,6 @@ var MenuPanel = React.createClass({
                   <i className={pinActionButtonIcon}></i>
                 </a>
               </li>
-              <li>
-                <a href="#" title="More options" className="dropdown-button" data-activates="dropdown-menu">
-                  <i className="mdi-navigation-more-vert right"></i>
-                </a>
-              </li>
             </ul>
           </div>
         </nav>
