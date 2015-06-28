@@ -1,7 +1,9 @@
 "use strict";
 
 var TabSwitcher = require("./TabSwitcher.jsx"),
-  AppActions = require('../actions/AppActions');
+  AppActions = require('../actions/AppActions'),
+  Importer = require('../core/Importer'),
+  Exporter = require('../core/Exporter');
 
 var MenuPanel = React.createClass({
   getInitialState: function() {
@@ -40,6 +42,24 @@ var MenuPanel = React.createClass({
             <ul className="right">
               <li>
                 <a
+                  onClick={this._load}
+                  href="#load"
+                  title="Open file" >
+                  <i className="mdi-maps-layers-clear"></i>
+                </a>
+                <input ref="importInput" type="file" className="hideme" onChange={Importer.handleFileImport} />
+              </li>
+              <li>
+                <a
+                  onClick={this._save}
+                  href="#save"
+                  title={pinActionButtonTitle} >
+                  <i className="mdi-maps-layers-clear"></i>
+                </a>
+                <a ref="downloadLink" className="hideme" />
+              </li>
+              <li>
+                <a
                   onClick={this._clearMap}
                   href="#clearMap"
                   title="Clear map" >
@@ -65,15 +85,29 @@ var MenuPanel = React.createClass({
     );
   },
 
+  _load: function(e) {
+    e.preventDefault();
+
+    React.findDOMNode(this.refs.importInput).click();
+  },
+
+  _save: function(e) {
+    e.preventDefault();
+
+    Exporter.exportAsFile(this.refs.downloadLink);
+  },
+
   _pinPanel: function(e) {
     e.preventDefault();
+
     this.setState({ pinned: !this.state.pinned })
   },
 
   _clearMap: function(e) {
     e.preventDefault();
+
     AppActions.destroy();
-  },
+  }
 });
 
 module.exports = MenuPanel;
