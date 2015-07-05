@@ -20,13 +20,13 @@ var MenuPanel = React.createClass({
 
   render: function(){
     var menuPanelClasses = "map-panel grey lighten-4 z-depth-2",
-      pinActionButtonIcon = "mdi-navigation-arrow-drop-up",
+      pinActionButtonIcon = "arrow_drop_up",
       pinActionButtonTitle = "Hide edit panel",
       panelContentClasses = "panel-container grey-text darken-3-text";
 
     if (this.state.pinned) {
       menuPanelClasses += " pinned";
-      pinActionButtonIcon = "mdi-navigation-arrow-drop-down";
+      pinActionButtonIcon = "arrow_drop_down";
       panelContentClasses += " hideme";
       pinActionButtonTitle = "Display edit panel";
     }
@@ -44,8 +44,8 @@ var MenuPanel = React.createClass({
                 <a
                   onClick={this._load}
                   href="#load"
-                  title="Open file" >
-                  <i className="mdi-maps-layers-clear"></i>
+                  title="Upload local file" >
+                  <i className="material-icons">folder_open</i>
                 </a>
                 <input ref="importInput" type="file" className="hideme" onChange={Importer.handleFileImport} />
               </li>
@@ -53,8 +53,8 @@ var MenuPanel = React.createClass({
                 <a
                   onClick={this._save}
                   href="#save"
-                  title={pinActionButtonTitle} >
-                  <i className="mdi-maps-layers-clear"></i>
+                  title="Download GeoJson to local file" >
+                  <i className="material-icons">save</i>
                 </a>
                 <a ref="downloadLink" className="hideme" />
               </li>
@@ -63,7 +63,7 @@ var MenuPanel = React.createClass({
                   onClick={this._clearMap}
                   href="#clearMap"
                   title="Clear map" >
-                  <i className="mdi-maps-layers-clear"></i>
+                  <i className="material-icons">clear</i>
                 </a>
               </li>
               <li>
@@ -71,7 +71,7 @@ var MenuPanel = React.createClass({
                   onClick={this._pinPanel}
                   href="#pinPanel"
                   title={pinActionButtonTitle} >
-                  <i className={pinActionButtonIcon}></i>
+                  <i className="material-icons">{pinActionButtonIcon}</i>
                 </a>
               </li>
             </ul>
