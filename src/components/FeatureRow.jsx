@@ -1,22 +1,16 @@
 "use strict";
 
-function iconClassesForFeatureType(featureType) {
-  var classes = 'circle large';
+function iconNameForFeatureType(featureType) {
   switch(featureType) {
     case 'Point':
-        classes += ' mdi-maps-place';
-        break;
+        return 'place';
     case 'LineString':
-        classes += ' mdi-content-remove';
-        break;
+        return 'crop';
     case 'Polygon':
-        classes += ' mdi-image-panorama-wide-angle';
-        break;
+        return 'crop_landscape';
     default:
-        classes += ' mdi-maps-layers';
-        break;
+        return 'crop_square';
   }
-  return classes;
 }
 
 var FeatureRow = React.createClass({
@@ -33,11 +27,10 @@ var FeatureRow = React.createClass({
   render: function() {
     var feature = this.props.feature,
       title = feature.type,
-      iconClasses = iconClassesForFeatureType(feature.type);
-
+      iconName = iconNameForFeatureType(feature.type);
     return (
       <li className='collection-item avatar'>
-        <i className={iconClasses}></i>
+        <i className="circle large material-icons">{iconName}</i>
         <span className='title'>{title}</span>
         <p>
           {Object.keys(feature.properties).map(function(k,i){

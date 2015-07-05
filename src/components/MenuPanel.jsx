@@ -1,7 +1,9 @@
 "use strict";
 
 var TabSwitcher = require("./TabSwitcher.jsx"),
-  AppActions = require('../actions/AppActions');
+  AppActions = require('../actions/AppActions'),
+  Importer = require('../core/Importer'),
+  Exporter = require('../core/Exporter');
 
 var MenuPanel = React.createClass({
   getInitialState: function() {
@@ -18,13 +20,13 @@ var MenuPanel = React.createClass({
 
   render: function(){
     var menuPanelClasses = "map-panel grey lighten-4 z-depth-2",
-      pinActionButtonIcon = "mdi-navigation-arrow-drop-up",
+      pinActionButtonIcon = "arrow_drop_up",
       pinActionButtonTitle = "Hide edit panel",
       panelContentClasses = "panel-container grey-text darken-3-text";
 
     if (this.state.pinned) {
       menuPanelClasses += " pinned";
-      pinActionButtonIcon = "mdi-navigation-arrow-drop-down";
+      pinActionButtonIcon = "arrow_drop_down";
       panelContentClasses += " hideme";
       pinActionButtonTitle = "Display edit panel";
     }
@@ -40,10 +42,28 @@ var MenuPanel = React.createClass({
             <ul className="right">
               <li>
                 <a
+                  onClick={this._load}
+                  href="#load"
+                  title="Upload local file" >
+                  <i className="material-icons">folder_open</i>
+                </a>
+                <input ref="importInput" type="file" className="hideme" onChange={Importer.handleFileImport} />
+              </li>
+              <li>
+                <a
+                  onClick={this._save}
+                  href="#save"
+                  title="Download GeoJson to local file" >
+                  <i className="material-icons">save</i>
+                </a>
+                <a ref="downloadLink" className="hideme" />
+              </li>
+              <li>
+                <a
                   onClick={this._clearMap}
                   href="#clearMap"
                   title="Clear map" >
-                  <i className="mdi-maps-layers-clear"></i>
+                  <i className="material-icons">clear</i>
                 </a>
               </li>
               <li>
@@ -51,12 +71,7 @@ var MenuPanel = React.createClass({
                   onClick={this._pinPanel}
                   href="#pinPanel"
                   title={pinActionButtonTitle} >
-                  <i className={pinActionButtonIcon}></i>
-                </a>
-              </li>
-              <li>
-                <a href="#" title="More options" className="dropdown-button" data-activates="dropdown-menu">
-                  <i className="mdi-navigation-more-vert right"></i>
+                  <i className="material-icons">{pinActionButtonIcon}</i>
                 </a>
               </li>
             </ul>
@@ -70,15 +85,29 @@ var MenuPanel = React.createClass({
     );
   },
 
+  _load: function(e) {
+    e.preventDefault();
+
+    React.findDOMNode(this.refs.importInput).click();
+  },
+
+  _save: function(e) {
+    e.preventDefault();
+
+    Exporter.exportAsFile(this.refs.downloadLink);
+  },
+
   _pinPanel: function(e) {
     e.preventDefault();
+
     this.setState({ pinned: !this.state.pinned })
   },
 
   _clearMap: function(e) {
     e.preventDefault();
+
     AppActions.destroy();
-  },
+  }
 });
 
 module.exports = MenuPanel;

@@ -1,45 +1,11 @@
 "use strict";
 
-var AppActions = require('../actions/AppActions'),
-  GeoJsonHint = require('geojsonhint'),
-  CodeMirrorEditor = require('./CodeMirrorEditor.jsx');
+var Importer = require('../core/Importer'),
+  CodeMirrorEditor = require('./CodeMirrorEditor.jsx'),
+  Utils = require('../core/Utils');
 
 function presentGeoJson(data) {
   return JSON.stringify(data, null, 2);
-}
-
-function errorsToSentence(errors) {
-  if (errors instanceof Error) {
-    return errors.toString();
-  }
-
-  return errors.map(function(err){
-    return err.message;
-  }).join(', ');
-}
-
-function validateInput(data, successCallback, errorCallback) {
-  var errors = GeoJsonHint.hint(data);
-
-  if (errors instanceof Error) {
-    errorCallback(errors);
-  } else if (errors.length) {
-    errorCallback(errors);
-  }else{
-    try {
-      successCallback(
-        JSON.parse(data)
-      );
-    } catch(e) {
-      errorCallback(e);
-    }
-  }
-}
-
-function success(data) {
-  AppActions.create(
-    data
-  );
 }
 
 var JsonEditInput = React.createClass({
@@ -62,7 +28,7 @@ var JsonEditInput = React.createClass({
 
   onInputChange: function(e) {
     // handle update from editor
-    validateInput(e.target.value, success, this.onError);
+    Importer.handleStringImport(e.target.value, undefined, this.onError);
   },
 
   onError: function(errors) {
@@ -82,7 +48,7 @@ var JsonEditInput = React.createClass({
     }
 
     if(this.state.errors) {
-      var errorMessage = errorsToSentence(this.state.errors);
+      var errorMessage = Utils.errorsToSentence(this.state.errors);
       errorClasses += " error-message";
       hasError = true;
 

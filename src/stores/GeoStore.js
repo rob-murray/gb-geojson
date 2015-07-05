@@ -5,7 +5,7 @@ var AppDispatcher = require('../dispatcher/AppDispatcher'),
   AppConstants = require('../constants/AppConstants'),
   assign = require('object-assign'),
   ReprojectGeoJson = require('../geo/ReprojectGeoJson'),
-  Utils = require('../geo/Utils');
+  Utils = require('../core/Utils');
 
 var CHANGE_EVENT = 'change';
 
