@@ -3,7 +3,7 @@
 var OSOpenSpace = require('os-leaflet'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),
-  GeoUtils = require('../geo/Utils'),
+  Utils = require('../core/Utils'),
   LeafletDraw = require('leaflet-draw');
 
 L.Icon.Default.imagePath = 'http://cdn.leafletjs.com/leaflet-0.7.3/images';
@@ -18,7 +18,7 @@ function transformLayerToGeoJson(layer) {
     }
     // or ?
   });
-  return GeoUtils.featureCollection(features);
+  return Utils.featureCollection(features);
 }
 
 function addPopupToLayer(layer) {
