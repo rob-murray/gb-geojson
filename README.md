@@ -14,6 +14,7 @@ View, create, edit, transform GeoJSON map data in British National Grid referenc
 * View, create, edit GeoJSON in WGS84 and OS National Grid coordinate reference systems
 * Reproject on the fly
 * Uses Ordnance Survey backdrop mapping
+* Open from and save to local files
 
 
 ### What is the difference between Lon, Lat and OS National Grid?
@@ -31,7 +32,7 @@ The reprojection is done by the [gbify-geojson](https://github.com/rob-murray/gb
 
 ### Example data
 
-Checkout the `data/` directory for some example GeoJSON.
+Checkout the `data/` directory for some example GeoJSONs (sic).
 
 ```json
 {"type":"Feature","properties":{"popupContent":"I am SU43."},"geometry":{"type":"Polygon","coordinates":[[[440000,130000],[450000,130000],[450000,140000],[440000,140000],[440000,130000]]]}}
