@@ -1,13 +1,13 @@
 "use strict";
 
-var gbify = require("gbify-geojson");
+const gbify = require("gbify-geojson");
 
 module.exports = {
-  toOSGB36: function(geoJson) {
+  toOSGB36(geoJson) {
     return gbify.toOSGB36(geoJson);
   },
 
-  toWGS84: function(geoJson) {
+  toWGS84(geoJson) {
     return gbify.toWGS84(geoJson);
   }
 };

@@ -1,9 +1,12 @@
 (function () {
   "use strict";
-  var App = require('./components/App.jsx'),
+
+  const React = require('react'),
+    ReactDOM = require('react-dom'),
+    App = require('./components/App.jsx'),
     isProduction = process.env.NODE_ENV === 'production';
 
-  React.render(
+  ReactDOM.render(
     <App />,
     document.getElementById('app')
   );

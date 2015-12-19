@@ -1,25 +1,25 @@
 "use strict";
 
-var AppDispatcher = require('../dispatcher/AppDispatcher'),
+const AppDispatcher = require('../dispatcher/AppDispatcher'),
   EventEmitter = require('events').EventEmitter,
   AppConstants = require('../constants/AppConstants'),
   assign = require('object-assign'),
   ReprojectGeoJson = require('../geo/ReprojectGeoJson'),
   Utils = require('../core/Utils');
 
-var CHANGE_EVENT = 'change';
+const CHANGE_EVENT = 'change';
 
 // Reference to GeoJson objs
 // Swap how this is stored at somepoint, version it, etc
 // TODO fix: We always store both OSGB36 and WGS84 projections updating the
 //  other upon change. Design this better.
 //
-var _osgb = {};
-var _wgs84 = {};
-var _inputCrs = AppConstants.CRS_LONLAT;
+let _osgb = {};
+let _wgs84 = {};
+let _inputCrs = AppConstants.CRS_LONLAT;
 
-var emptyGeoJson = Utils.featureCollection([]);
-var initialCrs = AppConstants.CRS_LONLAT;
+const emptyGeoJson = Utils.featureCollection([]),
+  initialCrs = AppConstants.CRS_LONLAT;
 
 function reproject(geoJson, requestedCrs) {
   if(requestedCrs === AppConstants.CRS_LONLAT) {
@@ -87,11 +87,11 @@ function destroy() {
   _osgb = _wgs84 = emptyGeoJson;
 }
 
-var AppStore = assign({}, EventEmitter.prototype, {
+const AppStore = assign({}, EventEmitter.prototype, {
   /**
    * Get the GeoJson and Reference System.
    */
-  getItem: function(requestedCrs) {
+  getItem(requestedCrs) {
     if(!requestedCrs) {
       requestedCrs = _inputCrs;
     }
@@ -102,28 +102,28 @@ var AppStore = assign({}, EventEmitter.prototype, {
     };
   },
 
-  emitChange: function() {
+  emitChange() {
     this.emit(CHANGE_EVENT);
   },
 
   /**
    * @param {function} callback
    */
-  addChangeListener: function(callback) {
+  addChangeListener(callback) {
     this.on(CHANGE_EVENT, callback);
   },
 
   /**
    * @param {function} callback
    */
-  removeChangeListener: function(callback) {
+  removeChangeListener(callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
 
 // Register callback to handle all updates
-AppDispatcher.register(function(action) {
-  var data, inputReferenceSystem;
+AppDispatcher.register(action => {
+  let data, inputReferenceSystem;
 
   switch(action.actionType) {
     case AppConstants.GEOJSON_CREATE:

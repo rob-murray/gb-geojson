@@ -1,6 +1,7 @@
 "use strict";
 
-var Importer = require('../core/Importer'),
+var React = require('react'),
+  Importer = require('../core/Importer'),
   CodeMirrorEditor = require('./CodeMirrorEditor.jsx'),
   Utils = require('../core/Utils');
 

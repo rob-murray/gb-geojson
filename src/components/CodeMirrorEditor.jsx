@@ -1,6 +1,8 @@
 "use strict";
 
-var CodeMirror = require('codemirror');
+var React = require('react'),
+  ReactDOM = require('react-dom'),
+  CodeMirror = require('codemirror');
 
 function parseable(input) {
   try {
@@ -39,7 +41,7 @@ var CodeMirrorEditor = React.createClass({
 
   componentDidMount: function() {
     this.editor = CodeMirror.fromTextArea(
-      this.refs.editor.getDOMNode(), {
+      ReactDOM.findDOMNode(this.refs.editor), {
         mode: 'application/json',
         matchBrackets: true,
         tabSize: 2,

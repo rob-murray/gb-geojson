@@ -1,6 +1,7 @@
 "use strict";
 
-var FeatureRow = require('./FeatureRow.jsx'),
+var React = require('react'),
+  FeatureRow = require('./FeatureRow.jsx'),
   FeatureParser = require('../geo/FeatureParser');
 
 var FeatureList = React.createClass({

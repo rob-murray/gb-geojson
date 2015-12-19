@@ -1,6 +1,6 @@
 "use strict";
 
-var keyMirror = require('keymirror');
+const keyMirror = require('keymirror');
 
 module.exports = keyMirror({
   GEOJSON_CREATE: null,

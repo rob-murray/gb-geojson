@@ -4,7 +4,9 @@ var OSOpenSpace = require('os-leaflet'),
   AppActions = require('../actions/AppActions'),
   AppConstants = require('../constants/AppConstants'),
   Utils = require('../core/Utils'),
-  LeafletDraw = require('leaflet-draw');
+  LeafletDraw = require('leaflet-draw'),
+  React = require('react'),
+  ReactDOM = require('react-dom');
 
 L.Icon.Default.imagePath = 'http://cdn.leafletjs.com/leaflet-0.7.3/images';
 var MAP_CONTROL_POSITION = 'topright',
@@ -52,7 +54,7 @@ var OSMap = React.createClass({
   },
 
   componentDidMount: function () {
-    this.map = this._createMap(this.getDOMNode());
+    this.map = this._createMap(ReactDOM.findDOMNode(this));
     this.setupMap();
   },
 

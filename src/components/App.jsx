@@ -1,6 +1,7 @@
 "use strict";
 
-var OSMap = require('./OSMap.jsx'),
+var React = require('react'),
+  OSMap = require('./OSMap.jsx'),
   MenuPanel = require('./MenuPanel.jsx'),
   ManualEditPanel = require('./ManualEditPanel.jsx'),
   GeoStore = require('../stores/GeoStore'),

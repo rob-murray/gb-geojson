@@ -1,5 +1,7 @@
 "use strict";
 
+var React = require('react');
+
 function iconNameForFeatureType(featureType) {
   switch(featureType) {
     case 'Point':

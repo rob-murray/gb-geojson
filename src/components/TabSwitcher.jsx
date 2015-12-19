@@ -1,5 +1,7 @@
 "use strict";
 
+var React = require('react');
+
 var EDIT_TAB = 0,
   FEATURE_LIST_TAB = 1;
 

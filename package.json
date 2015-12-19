@@ -28,34 +28,31 @@
   "homepage": "https://github.com/rob-murray/gb-geojson",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch-js": "NODE_ENV='development' watchify -e src/main.js -o dist/bundle.js",
-    "build-dev": "NODE_ENV='development' browserify -e src/main.js -o dist/bundle.js",
-    "build": "NODE_ENV='production' browserify -e src/main.js | uglifyjs -cm > dist/bundle.js"
-  },
-  "browserify": {
-    "transform": [
-      "reactify",
-      "envify"
-    ]
+    "webpack-server": "webpack-dev-server --hot --progress --colors",
+    "build": "NODE_ENV='production' webpack -p"
   },
   "devDependencies": {
-    "browserify": "^10.2.1",
     "codemirror": "^5.3.0",
     "envify": "^3.4.0",
     "express": "^4.12.4",
     "flux": "^2.0.3",
     "gbify-geojson": "^0.2.0",
     "geojsonhint": "^1.0.0",
-    "jsxhint": "^0.15.0",
     "keymirror": "^0.1.1",
     "leaflet": "^0.7.7",
     "leaflet-draw": "^0.2.3",
     "object-assign": "^2.0.0",
     "os-leaflet": "^0.2.0",
-    "react": "^0.13.3",
-    "reactify": "^1.1.1",
-    "uglify-js": "^2.4.23",
+    "react": "^0.14.3",
+    "react-dom": "0.14.3",
+    "jsxhint": "^0.15.0",
     "underscore": "^1.8.3",
-    "watchify": "^3.2.1"
+    "babel-core": "latest",
+    "babel-loader": "latest",
+    "babel-preset-es2015": "latest",
+    "babel-preset-react": "latest",
+    "babelify": "latest",
+    "webpack": "latest",
+    "webpack-dev-server": "latest"
   }
 }

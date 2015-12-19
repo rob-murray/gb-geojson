@@ -1,6 +1,8 @@
 "use strict";
 
-var TabSwitcher = require("./TabSwitcher.jsx"),
+var React = require('react'),
+  ReactDOM = require('react-dom'),
+  TabSwitcher = require("./TabSwitcher.jsx"),
   AppActions = require('../actions/AppActions'),
   Importer = require('../core/Importer'),
   Exporter = require('../core/Exporter');
@@ -88,7 +90,7 @@ var MenuPanel = React.createClass({
   _load: function(e) {
     e.preventDefault();
 
-    React.findDOMNode(this.refs.importInput).click();
+    ReactDOM.findDOMNode(this.refs.importInput).click();
   },
 
   _save: function(e) {

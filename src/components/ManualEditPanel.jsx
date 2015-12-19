@@ -3,7 +3,8 @@
 var JsonEditInput = require('./JsonEditInput.jsx'),
   FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants');
+  AppConstants = require('../constants/AppConstants'),
+  React = require('react');
 
 var CRS_LINK = 'https://github.com/rob-murray/gb-geojson#what-is-the-difference-between-lon-lat-and-os-national-grid';
 
