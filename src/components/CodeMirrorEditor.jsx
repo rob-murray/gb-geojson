@@ -1,6 +1,6 @@
 "use strict";
 
-var React = require('react'),
+const React = require('react'),
   ReactDOM = require('react-dom'),
   CodeMirror = require('codemirror');
 
@@ -26,8 +26,8 @@ function changesShouldBeSentForUpdate(editorContent, propValue) {
 // CodeMirror React component
 // based on https://github.com/ForbesLindesay/react-code-mirror/blob/master/index.js
 //
-var CodeMirrorEditor = React.createClass({
-  getInitialState: function() {
+const CodeMirrorEditor = React.createClass({
+  getInitialState() {
     return {
       isControlled: this.props.value != null
     };
@@ -39,7 +39,7 @@ var CodeMirrorEditor = React.createClass({
     onChange: React.PropTypes.func
   },
 
-  componentDidMount: function() {
+  componentDidMount() {
     this.editor = CodeMirror.fromTextArea(
       ReactDOM.findDOMNode(this.refs.editor), {
         mode: 'application/json',
@@ -52,7 +52,7 @@ var CodeMirrorEditor = React.createClass({
     this.editor.on('change', this.handleChange);
   },
 
-  componentDidUpdate: function() {
+  componentDidUpdate() {
     if (this.editor) {
       if (this.props.value != null || this.props.value !== undefined) {
         // simply update the editor if the incoming content
@@ -64,9 +64,9 @@ var CodeMirrorEditor = React.createClass({
     }
   },
 
-  handleChange: function() {
+  handleChange() {
     if (this.editor) {
-      var currentValue = this.editor.getValue();
+      const currentValue = this.editor.getValue();
 
       // we only want to push the update up if the change is significant,
       // otherwise the irrelevant changes will come back again updating the
@@ -79,15 +79,17 @@ var CodeMirrorEditor = React.createClass({
     }
   },
 
-  render: function() {
-    var editor = React.createElement('textarea', {
+  render() {
+    const editor = React.createElement('textarea', {
       ref: 'editor',
       value: this.props.value,
       defaultValue: this.props.defaultValue,
       onChange: this.props.onChange,
       className: 'editor'
     });
-    var editorClasses = "editor-container";
+
+    let editorClasses = "editor-container";
+
     if (this.props.hasError) {
       editorClasses += " with-error";
     }

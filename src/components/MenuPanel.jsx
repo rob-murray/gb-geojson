@@ -1,27 +1,27 @@
 "use strict";
 
-var React = require('react'),
+const React = require('react'),
   ReactDOM = require('react-dom'),
   TabSwitcher = require("./TabSwitcher.jsx"),
   AppActions = require('../actions/AppActions'),
   Importer = require('../core/Importer'),
   Exporter = require('../core/Exporter');
 
-var MenuPanel = React.createClass({
-  getInitialState: function() {
+const MenuPanel = React.createClass({
+  getInitialState() {
     return {
       tabSelectedIndex: 0,
       pinned: false
     };
   },
 
-  switchTab: function(_) {
+  switchTab(_) {
     //this.setState({tabSelectedIndex: tabIndex});
     // the tab switching is outside of react atm :(
   },
 
-  render: function(){
-    var menuPanelClasses = "map-panel grey lighten-4 z-depth-2",
+  render() {
+    let menuPanelClasses = "map-panel grey lighten-4 z-depth-2",
       pinActionButtonIcon = "arrow_drop_up",
       pinActionButtonTitle = "Hide edit panel",
       panelContentClasses = "panel-container grey-text darken-3-text";
@@ -87,25 +87,25 @@ var MenuPanel = React.createClass({
     );
   },
 
-  _load: function(e) {
+  _load(e) {
     e.preventDefault();
 
     ReactDOM.findDOMNode(this.refs.importInput).click();
   },
 
-  _save: function(e) {
+  _save(e) {
     e.preventDefault();
 
     Exporter.exportAsFile(this.refs.downloadLink);
   },
 
-  _pinPanel: function(e) {
+  _pinPanel(e) {
     e.preventDefault();
 
     this.setState({ pinned: !this.state.pinned })
   },
 
-  _clearMap: function(e) {
+  _clearMap(e) {
     e.preventDefault();
 
     AppActions.destroy();

@@ -1,6 +1,6 @@
 "use strict";
 
-var React = require('react'),
+const React = require('react'),
   OSMap = require('./OSMap.jsx'),
   MenuPanel = require('./MenuPanel.jsx'),
   ManualEditPanel = require('./ManualEditPanel.jsx'),
@@ -13,21 +13,21 @@ function getState() {
   };
 }
 
-var App = React.createClass({
-  getInitialState: function() {
+const App = React.createClass({
+  getInitialState() {
     return getState();
   },
 
-  componentDidMount: function() {
+  componentDidMount() {
     GeoStore.addChangeListener(this._onChange);
   },
 
-  componentWillUnmount: function() {
+  componentWillUnmount() {
     GeoStore.removeChangeListener(this._onChange);
   },
 
-  render: function(){
-    var geoJson = this.state.item.geoJson,
+  render() {
+    const geoJson = this.state.item.geoJson,
       inputReferenceSystem = this.state.item.inputReferenceSystem,
       geoJsonForMapView = this._geoJsonForMapView();
       // TODO we need the wgs84 version for the map. design this better
@@ -42,14 +42,14 @@ var App = React.createClass({
     );
   },
 
-  _geoJsonForMapView: function() {
+  _geoJsonForMapView() {
     return GeoStore.getItem(AppConstants.CRS_LONLAT).geoJson;
   },
 
   /**
    * Event handler for 'change' events coming from the GeoStore
    */
-  _onChange: function() {
+  _onChange() {
     this.setState(getState());
   }
 });
