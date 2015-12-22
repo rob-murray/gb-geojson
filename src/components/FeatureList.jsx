@@ -1,21 +1,22 @@
 "use strict";
 
-var FeatureRow = require('./FeatureRow.jsx'),
+const React = require('react'),
+  FeatureRow = require('./FeatureRow.jsx'),
   FeatureParser = require('../geo/FeatureParser');
 
-var FeatureList = React.createClass({
+const FeatureList = React.createClass({
   propTypes: {
     geoJson: React.PropTypes.object.isRequired
   },
 
-  getDefaultProps: function() {
+  getDefaultProps() {
     return {
       geoJson: {}
     };
   },
 
-  render: function() {
-    var features = FeatureParser.features(this.props.geoJson);
+  render() {
+    const features = FeatureParser.features(this.props.geoJson);
 
     return (
       <div id="featureListContainer">

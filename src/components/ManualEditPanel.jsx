@@ -1,30 +1,29 @@
 "use strict";
 
-var JsonEditInput = require('./JsonEditInput.jsx'),
+const JsonEditInput = require('./JsonEditInput.jsx'),
   FeatureList = require('./FeatureList.jsx'),
   AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants');
+  AppConstants = require('../constants/AppConstants'),
+  React = require('react');
 
-var CRS_LINK = 'https://github.com/rob-murray/gb-geojson#what-is-the-difference-between-lon-lat-and-os-national-grid';
+const CRS_LINK = 'https://github.com/rob-murray/gb-geojson#what-is-the-difference-between-lon-lat-and-os-national-grid';
 
-var ManualEditPanel = React.createClass({
-  getDefaultProps: function() {
+const ManualEditPanel = React.createClass({
+  getDefaultProps() {
     return {
       inputReferenceSystem: AppConstants.CRS_LONLAT
     };
   },
 
-  onFormatChange: function(e) {
-    var checked = e.currentTarget.checked,
+  onFormatChange(e) {
+    const checked = e.currentTarget.checked,
       inputReferenceSystem = checked ? AppConstants.CRS_BNG : AppConstants.CRS_LONLAT;
 
-    AppActions.referenceSystemChanged(
-      inputReferenceSystem
-    );
+    AppActions.referenceSystemChanged(inputReferenceSystem);
   },
 
-  render: function(){
-    var checkboxValue = this._inputReferenceSystemMapping();
+  render() {
+    const checkboxValue = this._inputReferenceSystemMapping();
 
     return (
       <div id="tabContent">
@@ -54,7 +53,7 @@ var ManualEditPanel = React.createClass({
     );
   },
 
-  _inputReferenceSystemMapping: function() {
+  _inputReferenceSystemMapping() {
     return this.props.inputReferenceSystem === AppConstants.CRS_BNG;
   }
 });

@@ -1,5 +1,7 @@
 "use strict";
 
+const React = require('react');
+
 function iconNameForFeatureType(featureType) {
   switch(featureType) {
     case 'Point':
@@ -13,21 +15,22 @@ function iconNameForFeatureType(featureType) {
   }
 }
 
-var FeatureRow = React.createClass({
+const FeatureRow = React.createClass({
   propTypes: {
     feature: React.PropTypes.object
   },
 
-  getDefaultProps: function() {
+  getDefaultProps() {
     return {
       feature: {}
     };
   },
 
-  render: function() {
-    var feature = this.props.feature,
+  render() {
+    const feature = this.props.feature,
       title = feature.type,
       iconName = iconNameForFeatureType(feature.type);
+
     return (
       <li className='collection-item avatar'>
         <i className="circle large material-icons">{iconName}</i>

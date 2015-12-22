@@ -1,14 +1,15 @@
 "use strict";
 
-var EDIT_TAB = 0,
-  FEATURE_LIST_TAB = 1;
+const React = require('react');
 
-var TabSwitcher = React.createClass({
-  onClick: function(item) {
+const EDIT_TAB = 0, FEATURE_LIST_TAB = 1;
+
+const TabSwitcher = React.createClass({
+  onClick(item) {
     this.props.onTabClick(item);
   },
 
-  render: function() {
+  render() {
     return (
       <ul className="tabs">
         <li className="tab col s3">

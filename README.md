@@ -41,12 +41,12 @@ Checkout the `data/` directory for some example GeoJSONs (sic).
 
 ## Development
 
-#### Run local webserver
+#### Local development
 
-To aid local development there is a small webserver to serve static content.
+Use webpack to build and run local webserver.
 
 ```bash
-$ node server
+$ npm run webpack-server
 ```
 
 #### watchify
@@ -55,14 +55,6 @@ Run `watchify` when developing locally:
 
 ```
 $ npm run watch-js
-```
-
-#### Development build
-
-To build an unminified `browserified` bundle:
-
-```
-$ npm run build-dev
 ```
 
 #### Build CSS
@@ -75,7 +67,7 @@ $ sass --sourcemap=none --style compressed css/styles.scss:dist/styles.css
 
 #### Production build
 
-To produce a minified release `browserified` bundle:
+To produce a minified release +Production+ bundle:
 
 ```
 $ npm run build

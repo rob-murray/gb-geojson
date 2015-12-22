@@ -1,6 +1,7 @@
 "use strict";
 
-var Importer = require('../core/Importer'),
+const React = require('react'),
+  Importer = require('../core/Importer'),
   CodeMirrorEditor = require('./CodeMirrorEditor.jsx'),
   Utils = require('../core/Utils');
 
@@ -8,38 +9,37 @@ function presentGeoJson(data) {
   return JSON.stringify(data, null, 2);
 }
 
-var JsonEditInput = React.createClass({
+const JsonEditInput = React.createClass({
   propTypes: {
     geoJson: React.PropTypes.object.isRequired
   },
 
-  getInitialState: function() {
+  getInitialState() {
     return {
       errors: null
     };
   },
 
-  componentWillReceiveProps: function(_) {
+  componentWillReceiveProps(_) {
     // assume GeoJson passed in is valid :)
     this.setState({
       errors: null
     });
   },
 
-  onInputChange: function(e) {
+  onInputChange(e) {
     // handle update from editor
     Importer.handleStringImport(e.target.value, undefined, this.onError);
   },
 
-  onError: function(errors) {
+  onError(errors) {
     this.setState({errors: errors});
   },
 
-  render: function() {
-    var errorClasses = 'help',
+  render() {
+    let errorClasses = 'help',
       hasError = false,
-      editableJsonContent,
-      errorDisplay;
+      editableJsonContent, errorDisplay;
 
     if(!this.state.errors) {
       // we dont want to do anything with this in error state, so dont force
@@ -48,7 +48,7 @@ var JsonEditInput = React.createClass({
     }
 
     if(this.state.errors) {
-      var errorMessage = Utils.errorsToSentence(this.state.errors);
+      const errorMessage = Utils.errorsToSentence(this.state.errors);
       errorClasses += " error-message";
       hasError = true;
 

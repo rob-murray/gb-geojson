@@ -1,16 +1,16 @@
 "use strict";
 
-var AppDispatcher = require('../dispatcher/AppDispatcher'),
+const AppDispatcher = require('../dispatcher/AppDispatcher'),
   AppConstants = require('../constants/AppConstants');
 
-var AppActions = {
+const AppActions = {
   /**
    * Create new GeoJSON object.
    *
    * @param  {object} data The GeoJSON data object
    * @param  {const} inputReferenceSystem The reference system used
    */
-  create: function(data, inputReferenceSystem) {
+  create(data, inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_CREATE,
       data: data,
@@ -22,7 +22,7 @@ var AppActions = {
    * NOT USED :\
    * @param  {object} data
    */
-  update: function(data, inputReferenceSystem) {
+  update(data, inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_UPDATE,
       data: data,
@@ -33,7 +33,7 @@ var AppActions = {
   /**
    * Clear GeoJSON
    */
-  destroy: function() {
+  destroy() {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_DESTROY
     });
@@ -43,7 +43,7 @@ var AppActions = {
    * Coordinate reference sytem of data has changed
    * @param {const} The CRS changed to
    */
-  referenceSystemChanged: function(inputReferenceSystem) {
+  referenceSystemChanged(inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.CRS_CHANGE,
       inputReferenceSystem: inputReferenceSystem
