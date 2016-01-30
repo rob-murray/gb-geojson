@@ -1,9 +1,8 @@
 "use strict";
 
-const ReactDOM = require('react-dom'),
-  GeoStore = require('../stores/GeoStore'),
-  AppActions = require('../actions/AppActions'),
-  Utils = require('./Utils');
+import ReactDOM from "react-dom";
+import GeoStore from "../stores/GeoStore";
+import Utils from "./Utils";
 
 const MIME_TYPE = "application/json",
   FILE_NAME = "gb-geojson.json";
@@ -35,7 +34,7 @@ function defaultError(errors) {
   alert(Utils.errorsToSentence(errors));
 }
 
-module.exports = {
+export default {
   /**
    * Export the current GeoJson as a file using a dom element to create a blob url
    */
@@ -51,7 +50,7 @@ module.exports = {
     linkElement.href = dataUrl;
     linkElement.download = FILE_NAME;
     linkElement.textContent = FILE_NAME;
-    linkElement.dataset.downloadurl = [MIME_TYPE, FILE_NAME, dataUrl].join(':');
+    linkElement.dataset.downloadurl = [MIME_TYPE, FILE_NAME, dataUrl].join(":");
     linkElement.onclick = function(e) {
       cleanUp(this);
     };

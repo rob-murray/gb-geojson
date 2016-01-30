@@ -1,9 +1,9 @@
 "use strict";
 
-const React = require('react'),
-  Importer = require('../core/Importer'),
-  CodeMirrorEditor = require('./CodeMirrorEditor.jsx'),
-  Utils = require('../core/Utils');
+import React from "react";
+import Importer from "../core/Importer";
+import CodeMirrorEditor from "./CodeMirrorEditor.jsx";
+import Utils from "../core/Utils";
 
 function presentGeoJson(data) {
   return JSON.stringify(data, null, 2);
@@ -37,7 +37,7 @@ const JsonEditInput = React.createClass({
   },
 
   render() {
-    let errorClasses = 'help',
+    let errorClasses = "help",
       hasError = false,
       editableJsonContent, errorDisplay;
 
@@ -58,7 +58,7 @@ const JsonEditInput = React.createClass({
     }
 
     return (
-      <div id='jsonContainer' className='input-field'>
+      <div id="jsonContainer" className="input-field">
         <CodeMirrorEditor value={editableJsonContent} onChange={this.onInputChange} hasError={hasError} />
         {errorDisplay}
       </div>

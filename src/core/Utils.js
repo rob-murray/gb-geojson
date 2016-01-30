@@ -1,10 +1,10 @@
 "use strict";
 
-module.exports = {
+export default {
   featureCollection(features) {
     return {
-        type: 'FeatureCollection',
-        features: features
+      type: "FeatureCollection",
+      features: features
     };
   },
 
@@ -15,6 +15,6 @@ module.exports = {
 
     return errors.map(err => {
       return err.message;
-    }).join(', ');
+    }).join(", ");
   }
 };

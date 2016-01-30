@@ -1,8 +1,8 @@
 "use strict";
 
-const React = require('react'),
-  FeatureRow = require('./FeatureRow.jsx'),
-  FeatureParser = require('../geo/FeatureParser');
+import React from "react";
+import FeatureRow from "./FeatureRow.jsx";
+import FeatureParser from "../geo/FeatureParser";
 
 const FeatureList = React.createClass({
   propTypes: {

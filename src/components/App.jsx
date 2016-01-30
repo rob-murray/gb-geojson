@@ -1,11 +1,11 @@
 "use strict";
 
-const React = require('react'),
-  OSMap = require('./OSMap.jsx'),
-  MenuPanel = require('./MenuPanel.jsx'),
-  ManualEditPanel = require('./ManualEditPanel.jsx'),
-  GeoStore = require('../stores/GeoStore'),
-  AppConstants = require('../constants/AppConstants');
+import React from "react";
+import OSMap from "./OSMap.jsx";
+import MenuPanel from "./MenuPanel.jsx";
+import ManualEditPanel from "./ManualEditPanel.jsx";
+import GeoStore from "../stores/GeoStore";
+import AppConstants from "../constants/AppConstants";
 
 function getState() {
   return {

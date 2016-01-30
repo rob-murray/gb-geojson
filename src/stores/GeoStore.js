@@ -1,13 +1,13 @@
 "use strict";
 
-const AppDispatcher = require('../dispatcher/AppDispatcher'),
-  EventEmitter = require('events').EventEmitter,
-  AppConstants = require('../constants/AppConstants'),
-  assign = require('object-assign'),
-  ReprojectGeoJson = require('../geo/ReprojectGeoJson'),
-  Utils = require('../core/Utils');
+import AppDispatcher from "../dispatcher/AppDispatcher";
+import {EventEmitter} from "events";
+import AppConstants from "../constants/AppConstants";
+import assign from "object-assign";
+import ReprojectGeoJson from "../geo/ReprojectGeoJson";
+import Utils from "../core/Utils";
 
-const CHANGE_EVENT = 'change';
+const CHANGE_EVENT = "change";
 
 // Reference to GeoJson objs
 // Swap how this is stored at somepoint, version it, etc
@@ -71,13 +71,6 @@ function setInputCrs(inputReferenceSystem) {
  */
 function create(data, inputReferenceSystem) {
   setData(data, inputReferenceSystem);
-}
-
-/**
- * Update a GeoJson item.
- */
-function update(data, inputReferenceSystem) {
-  // TODO
 }
 
 /**
@@ -163,4 +156,4 @@ AppDispatcher.register(action => {
 create(emptyGeoJson, initialCrs);
 setInputCrs(initialCrs);
 
-module.exports = AppStore;
+export default AppStore;

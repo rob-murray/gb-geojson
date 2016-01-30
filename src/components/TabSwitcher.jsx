@@ -1,10 +1,10 @@
 "use strict";
 
-const React = require('react');
+import React from "react";
 
 const EDIT_TAB = 0, FEATURE_LIST_TAB = 1;
 
-const TabSwitcher = React.createClass({
+export default React.createClass({
   onClick(item) {
     this.props.onTabClick(item);
   },
@@ -26,5 +26,3 @@ const TabSwitcher = React.createClass({
     );
   }
 });
-
-module.exports = TabSwitcher;

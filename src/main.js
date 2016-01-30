@@ -1,15 +1,15 @@
-(function () {
-  "use strict";
+/*eslint-env node*/
+"use strict";
 
-  const React = require('react'),
-    ReactDOM = require('react-dom'),
-    App = require('./components/App.jsx'),
-    isProduction = process.env.NODE_ENV === 'production';
+import React from "react";
+import ReactDOM from "react-dom";
+import App from "./components/App.jsx";
 
-  ReactDOM.render(
-    <App />,
-    document.getElementById('app')
-  );
+const isProduction = process.env.NODE_ENV === "production";
 
-  require('./ga')(isProduction);
-})();
+ReactDOM.render(
+  <App />,
+  document.getElementById("app")
+);
+
+require("./ga")(isProduction);

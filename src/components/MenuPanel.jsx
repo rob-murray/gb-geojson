@@ -1,11 +1,11 @@
 "use strict";
 
-const React = require('react'),
-  ReactDOM = require('react-dom'),
-  TabSwitcher = require("./TabSwitcher.jsx"),
-  AppActions = require('../actions/AppActions'),
-  Importer = require('../core/Importer'),
-  Exporter = require('../core/Exporter');
+import React from "react";
+import ReactDOM from "react-dom";
+import TabSwitcher from "./TabSwitcher.jsx";
+import AppActions from "../actions/AppActions";
+import Importer from "../core/Importer";
+import Exporter from "../core/Exporter";
 
 const MenuPanel = React.createClass({
   getInitialState() {

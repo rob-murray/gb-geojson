@@ -1,8 +1,8 @@
 "use strict";
 
-const React = require('react'),
-  ReactDOM = require('react-dom'),
-  CodeMirror = require('codemirror');
+import React from "react";
+import ReactDOM from "react-dom";
+import CodeMirror from "codemirror";
 
 function parseable(input) {
   try {

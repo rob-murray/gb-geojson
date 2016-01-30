@@ -1,9 +1,8 @@
 "use strict";
 
-const GeoJsonHint = require('geojsonhint'),
-  AppActions = require('../actions/AppActions'),
-  Utils = require('./Utils');
-
+import GeoJsonHint from "geojsonhint";
+import AppActions from "../actions/AppActions";
+import Utils from "./Utils";
 
 function validateInput(data, successCallback, errorCallback) {
   const errors = GeoJsonHint.hint(data);
@@ -30,7 +29,7 @@ function defaultError(errors) {
   alert(Utils.errorsToSentence(errors));
 }
 
-module.exports = {
+export default {
   /**
    * Receive a string; validate and parse.
    */
@@ -68,7 +67,7 @@ module.exports = {
 
     reader.onload = function(file) {
       validateInput(file.target.result, onSuccess, onError);
-    }
+    };
 
     reader.readAsText(file);
   }
