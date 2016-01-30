@@ -13,7 +13,7 @@ function getState() {
   };
 }
 
-const App = React.createClass({
+export default React.createClass({
   getInitialState() {
     return getState();
   },
@@ -53,5 +53,3 @@ const App = React.createClass({
     this.setState(getState());
   }
 });
-
-module.exports = App;

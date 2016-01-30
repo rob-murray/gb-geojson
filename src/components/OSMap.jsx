@@ -41,7 +41,7 @@ function transformGeoJsonToLayers(geojson, editableLayer) {
   });
 }
 
-const OSMap = React.createClass({
+export default React.createClass({
   propTypes: {
     geoJson: React.PropTypes.object
   },
@@ -141,5 +141,3 @@ const OSMap = React.createClass({
     AppActions.create(transformLayerToGeoJson(this.editableLayer), AppConstants.CRS_LONLAT);
   }
 });
-
-module.exports = OSMap;

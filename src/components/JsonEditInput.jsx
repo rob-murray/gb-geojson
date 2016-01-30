@@ -9,7 +9,7 @@ function presentGeoJson(data) {
   return JSON.stringify(data, null, 2);
 }
 
-const JsonEditInput = React.createClass({
+export default React.createClass({
   propTypes: {
     geoJson: React.PropTypes.object.isRequired
   },
@@ -65,5 +65,3 @@ const JsonEditInput = React.createClass({
     );
   }
 });
-
-module.exports = JsonEditInput;

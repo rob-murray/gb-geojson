@@ -7,7 +7,7 @@ import AppActions from "../actions/AppActions";
 import Importer from "../core/Importer";
 import Exporter from "../core/Exporter";
 
-const MenuPanel = React.createClass({
+export default React.createClass({
   getInitialState() {
     return {
       tabSelectedIndex: 0,
@@ -111,5 +111,3 @@ const MenuPanel = React.createClass({
     AppActions.destroy();
   }
 });
-
-module.exports = MenuPanel;

@@ -15,7 +15,7 @@ function iconNameForFeatureType(featureType) {
   }
 }
 
-const FeatureRow = React.createClass({
+export default React.createClass({
   propTypes: {
     feature: React.PropTypes.object
   },
@@ -44,5 +44,3 @@ const FeatureRow = React.createClass({
     );
   }
 });
-
-module.exports = FeatureRow;
