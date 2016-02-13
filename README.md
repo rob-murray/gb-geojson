@@ -49,14 +49,6 @@ Use webpack to build and run local webserver.
 $ npm run webpack-server
 ```
 
-#### Build CSS
-
-Build the CSS output `styles.css`.
-
-```
-$ sass --sourcemap=none --style compressed css/styles.scss:dist/styles.css
-```
-
 #### Production build
 
 To produce a minified release **Production** bundle:

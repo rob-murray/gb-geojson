@@ -5,6 +5,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import App from "./components/App.jsx";
 
+import './css/styles.scss';
+
 const isProduction = process.env.NODE_ENV === "production";
 
 ReactDOM.render(
