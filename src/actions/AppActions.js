@@ -1,9 +1,9 @@
 "use strict";
 
-const AppDispatcher = require('../dispatcher/AppDispatcher'),
-  AppConstants = require('../constants/AppConstants');
+import AppDispatcher from "../dispatcher/AppDispatcher";
+import AppConstants from "../constants/AppConstants";
 
-const AppActions = {
+export default {
   /**
    * Create new GeoJSON object.
    *
@@ -13,18 +13,6 @@ const AppActions = {
   create(data, inputReferenceSystem) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GEOJSON_CREATE,
-      data: data,
-      inputReferenceSystem: inputReferenceSystem
-    });
-  },
-
-  /**
-   * NOT USED :\
-   * @param  {object} data
-   */
-  update(data, inputReferenceSystem) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GEOJSON_UPDATE,
       data: data,
       inputReferenceSystem: inputReferenceSystem
     });
@@ -50,5 +38,3 @@ const AppActions = {
     });
   }
 };
-
-module.exports = AppActions;

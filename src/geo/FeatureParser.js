@@ -19,7 +19,7 @@ function parseGeoJson(geoJson) {
   if (!validGeoJson(geoJson) && !anyFeatures(geoJson)) {
     return [];
   } else {
-    if (geoJson.type === 'Feature') {
+    if (geoJson.type === "Feature") {
       return [parseFeature(geoJson)];
     }else{
       return geoJson.features.map(parseFeature);
@@ -27,6 +27,6 @@ function parseGeoJson(geoJson) {
   }
 }
 
-module.exports = {
+export default {
   features: parseGeoJson
 };

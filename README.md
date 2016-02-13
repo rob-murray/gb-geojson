@@ -49,25 +49,9 @@ Use webpack to build and run local webserver.
 $ npm run webpack-server
 ```
 
-#### watchify
-
-Run `watchify` when developing locally:
-
-```
-$ npm run watch-js
-```
-
-#### Build CSS
-
-Build the CSS output `styles.css`.
-
-```
-$ sass --sourcemap=none --style compressed css/styles.scss:dist/styles.css
-```
-
 #### Production build
 
-To produce a minified release +Production+ bundle:
+To produce a minified release **Production** bundle:
 
 ```
 $ npm run build

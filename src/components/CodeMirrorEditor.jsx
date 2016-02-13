@@ -1,8 +1,8 @@
 "use strict";
 
-const React = require('react'),
-  ReactDOM = require('react-dom'),
-  CodeMirror = require('codemirror');
+import React from "react";
+import ReactDOM from "react-dom";
+import CodeMirror from "codemirror";
 
 function parseable(input) {
   try {
@@ -26,7 +26,7 @@ function changesShouldBeSentForUpdate(editorContent, propValue) {
 // CodeMirror React component
 // based on https://github.com/ForbesLindesay/react-code-mirror/blob/master/index.js
 //
-const CodeMirrorEditor = React.createClass({
+export default React.createClass({
   getInitialState() {
     return {
       isControlled: this.props.value != null
@@ -97,5 +97,3 @@ const CodeMirrorEditor = React.createClass({
     return React.createElement('div', {className: editorClasses}, editor);
   }
 });
-
-module.exports = CodeMirrorEditor;

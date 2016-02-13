@@ -1,8 +1,8 @@
 "use strict";
 
-const keyMirror = require('keymirror');
+import keyMirror from "keymirror";
 
-module.exports = keyMirror({
+export default keyMirror({
   GEOJSON_CREATE: null,
   GEOJSON_DESTROY: null,
   GEOJSON_UPDATE: null,

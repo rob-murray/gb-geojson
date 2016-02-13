@@ -1,20 +1,20 @@
 "use strict";
 
-const OSOpenSpace = require('os-leaflet'),
-  AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants'),
-  Utils = require('../core/Utils'),
-  LeafletDraw = require('leaflet-draw'),
-  React = require('react'),
-  ReactDOM = require('react-dom');
+import OSOpenSpace from "os-leaflet";
+import AppActions from "../actions/AppActions";
+import AppConstants from "../constants/AppConstants";
+import Utils from "../core/Utils";
+import LeafletDraw from "leaflet-draw";
+import React from "react";
+import ReactDOM from "react-dom";
 
-L.Icon.Default.imagePath = 'http://cdn.leafletjs.com/leaflet-0.7.3/images';
-const MAP_CONTROL_POSITION = 'topright', MENU_PANEL_WIDTH = 500;
+L.Icon.Default.imagePath = "http://cdn.leafletjs.com/leaflet-0.7.3/images";
+const MAP_CONTROL_POSITION = "topright", MENU_PANEL_WIDTH = 500;
 
 function transformLayerToGeoJson(layer) {
   const features = [];
   layer.eachLayer(layer => {
-    if ('toGeoJSON' in layer) {
+    if ("toGeoJSON" in layer) {
       features.push(layer.toGeoJSON());
     }
     // or ?
@@ -41,7 +41,7 @@ function transformGeoJsonToLayers(geojson, editableLayer) {
   });
 }
 
-const OSMap = React.createClass({
+export default React.createClass({
   propTypes: {
     geoJson: React.PropTypes.object
   },
@@ -109,9 +109,9 @@ const OSMap = React.createClass({
 
   _enableEditControl() {
     if(!this._drawControl) {
-      this.map.on('draw:edited', this._update);
-      this.map.on('draw:deleted', this._update);
-      this.map.on('draw:created', this._created);
+      this.map.on("draw:edited", this._update);
+      this.map.on("draw:deleted", this._update);
+      this.map.on("draw:created", this._created);
     }
 
     this._drawControl = new L.Control.Draw({
@@ -141,5 +141,3 @@ const OSMap = React.createClass({
     AppActions.create(transformLayerToGeoJson(this.editableLayer), AppConstants.CRS_LONLAT);
   }
 });
-
-module.exports = OSMap;

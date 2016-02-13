@@ -1,8 +1,8 @@
 "use strict";
 
-const gbify = require("gbify-geojson");
+import gbify from "gbify-geojson";
 
-module.exports = {
+export default {
   toOSGB36(geoJson) {
     return gbify.toOSGB36(geoJson);
   },

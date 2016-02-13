@@ -1,14 +1,14 @@
 "use strict";
 
-const JsonEditInput = require('./JsonEditInput.jsx'),
-  FeatureList = require('./FeatureList.jsx'),
-  AppActions = require('../actions/AppActions'),
-  AppConstants = require('../constants/AppConstants'),
-  React = require('react');
+import JsonEditInput from "./JsonEditInput.jsx";
+import FeatureList from "./FeatureList.jsx";
+import AppActions from "../actions/AppActions";
+import AppConstants from "../constants/AppConstants";
+import React from "react";
 
-const CRS_LINK = 'https://github.com/rob-murray/gb-geojson#what-is-the-difference-between-lon-lat-and-os-national-grid';
+const CRS_LINK = "https://github.com/rob-murray/gb-geojson#what-is-the-difference-between-lon-lat-and-os-national-grid";
 
-const ManualEditPanel = React.createClass({
+export default React.createClass({
   getDefaultProps() {
     return {
       inputReferenceSystem: AppConstants.CRS_LONLAT
@@ -57,5 +57,3 @@ const ManualEditPanel = React.createClass({
     return this.props.inputReferenceSystem === AppConstants.CRS_BNG;
   }
 });
-
-module.exports = ManualEditPanel;

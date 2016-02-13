@@ -1,10 +1,10 @@
 "use strict";
 
-const React = require('react'),
-  FeatureRow = require('./FeatureRow.jsx'),
-  FeatureParser = require('../geo/FeatureParser');
+import React from "react";
+import FeatureRow from "./FeatureRow.jsx";
+import FeatureParser from "../geo/FeatureParser";
 
-const FeatureList = React.createClass({
+export default React.createClass({
   propTypes: {
     geoJson: React.PropTypes.object.isRequired
   },
@@ -29,5 +29,3 @@ const FeatureList = React.createClass({
     );
   }
 });
-
-module.exports = FeatureList;
