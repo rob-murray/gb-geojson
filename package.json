@@ -58,6 +58,6 @@
     "underscore": "^1.8.3",
     "webpack": "latest",
     "webpack-dev-server": "latest",
-    "node-sass": "3.4.2"
+    "node-sass": "3.13.1"
   }
 }
