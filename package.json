@@ -50,7 +50,7 @@
     "leaflet": "^0.7.7",
     "leaflet-draw": "^0.2.3",
     "object-assign": "^2.0.0",
-    "os-leaflet": "^0.2.0",
+    "os-leaflet": "^1.0.0",
     "react": "^0.14.3",
     "react-dom": "0.14.3",
     "sass-loader": "3.1.2",
